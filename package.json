@@ -1,0 +1,19 @@
+{
+  "name": "tour-de-force",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/laptou/tour-de-force.git"
+  },
+  "author": "Ibiyemi Abiodun",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/laptou/tour-de-force/issues"
+  },
+  "homepage": "https://gitlab.com/laptou/tour-de-force#README"
+}
