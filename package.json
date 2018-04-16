@@ -15,5 +15,13 @@
   "bugs": {
     "url": "https://gitlab.com/laptou/tour-de-force/issues"
   },
-  "homepage": "https://gitlab.com/laptou/tour-de-force#README"
+  "homepage": "https://gitlab.com/laptou/tour-de-force#README",
+  "devDependencies": {
+    "@types/pixi.js": "^4.7.2",
+    "@types/axios": "^0.14.0",
+    "@types/lodash": "^4.14.93",
+    "@types/node": "^8.10.1",
+    "@types/webpack": "^4.1.3",
+    "@types/webpack-env": "^1.13.5"
+  }
 }
