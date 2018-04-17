@@ -96,13 +96,17 @@ export class App
         return this.pixi.renderer;
     }
 
+    get resolution()
+    {
+        return this.pixi.renderer.screen;
+    }
+
     constructor()
     {
-        this.pixi = new PIXI.Application({ autoResize: true });
-        this.renderer.view.style.position = "absolute";
-        this.renderer.view.style.display = "block";
-        this.renderer.autoResize = true;
+        this.pixi = new PIXI.Application({ autoResize: true, resolution: window.devicePixelRatio || 1 });
+
         this.renderer.resize(window.innerWidth, window.innerHeight);
+
         document.body.appendChild(this.pixi.view);
 
         const s = new TitleScreen();
@@ -112,6 +116,12 @@ export class App
         this.manager.push(s, true);
 
         this.pixi.start();
+
+        console.log(window.innerWidth);
+        console.log(window.innerHeight);
+        console.log(this.resolution);
+        console.log(this.pixi.renderer.width);
+        console.log(this.pixi.renderer.height);
 
         requestAnimationFrame(this.render.bind(this));
     }
