@@ -1,12 +1,12 @@
-import { App, RenderParameters, ResumeParameters } from "..";
+import { App, ResumeParameters } from "..";
 
 export interface IScreen
 {
     init(app: App): Promise<void>;
-    resume(params: ResumeParameters): Promise<void>;
+    resume(params: ResumeParameters): void;
     intro(): Promise<void>;
     outro(): Promise<void>;
-    pause(): Promise<void>;
+    pause(): void;
     destroy(): Promise<void>;
-    render(params: RenderParameters): void;
+    update(time: number, delta: number): void;
 }

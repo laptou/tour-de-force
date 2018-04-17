@@ -1,52 +1,8 @@
+import * as PIXI from "pixi.js";
+
 import { IScreen } from "./screen/base";
 import { TitleScreen } from "./screen/title";
 import { last } from "./util";
-
-export interface RenderParameters 
-{
-    timestamp: number;
-    resolution: { x: number; y: number; };
-    renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer;
-}
-
-export interface ResumeParameters
-{
-    timestamp: number;
-}
-
-export class App
-{
-    private pixi: PIXI.Application;
-    private manager: ScreenManager;
-
-    get loader()
-    {
-        return this.pixi.loader;
-    }
-
-    constructor()
-    {
-        this.pixi = new PIXI.Application({ autoResize: true });
-        this.pixi.start();
-        this.pixi.ticker.add(this.render);
-
-        const s = new TitleScreen();
-        this.manager = new ScreenManager();
-        this.manager.push(s, true);
-        s.init(this);
-
-        document.body.appendChild(this.pixi.view);
-    }
-
-    public render(deltaTime: number): any
-    {
-        this.manager.render({
-            renderer: this.pixi.renderer,
-            timestamp: this.pixi.ticker.lastTime,
-            resolution: { x: 0, y: 0 }
-        })
-    }
-}
 
 class ScreenManager 
 {
@@ -60,8 +16,10 @@ class ScreenManager
             this.renderStack.forEach(async s =>
             {
                 await s.outro();
-                await s.pause();
-                s.destroy();
+
+                s.pause();
+
+                await s.destroy();
             });
 
             this.renderStack = [screen];
@@ -78,7 +36,7 @@ class ScreenManager
         this.backStack.push(screen);
 
         screen.resume({ timestamp: 0 });
-        screen.intro();
+        screen.intro().catch(null);
     }
 
     public pop()
@@ -91,11 +49,84 @@ class ScreenManager
         if (next) this.renderStack = [next];
     }
 
-    public render(params: RenderParameters)
+    public update(time: number, delta: number)
     {
         for (const screen of this.renderStack)
         {
-            screen.render(params);
+            screen.update(time, delta);
         }
     }
 }
+
+export interface RenderParameters 
+{
+    timestamp: number;
+    resolution: { x: number; y: number; };
+    renderer: PIXI.WebGLRenderer;
+}
+
+export interface ResumeParameters
+{
+    timestamp: number;
+}
+
+export class App
+{
+    private pixi: PIXI.Application;
+    private manager: ScreenManager;
+    private lastFrame: number = -1;
+
+    get loader()
+    {
+        return this.pixi.loader;
+    }
+
+    get stage()
+    {
+        return this.pixi.stage;
+    }
+
+    get resources()
+    {
+        return this.pixi.loader.resources;
+    }
+
+    get renderer() 
+    {
+        return this.pixi.renderer;
+    }
+
+    constructor()
+    {
+        this.pixi = new PIXI.Application({ autoResize: true });
+        this.renderer.view.style.position = "absolute";
+        this.renderer.view.style.display = "block";
+        this.renderer.autoResize = true;
+        this.renderer.resize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(this.pixi.view);
+
+        const s = new TitleScreen();
+        s.init(this).catch(alert);
+
+        this.manager = new ScreenManager();
+        this.manager.push(s, true);
+
+        this.pixi.start();
+
+        requestAnimationFrame(this.render.bind(this));
+    }
+
+    public render(time: number): any
+    {
+        const delta = time - (this.lastFrame === -1 ? time : this.lastFrame);
+        this.lastFrame = time;
+
+        this.manager.update(time, delta);
+        this.pixi.render();
+
+        requestAnimationFrame(this.render.bind(this));
+    }
+}
+
+
+const app = new App();

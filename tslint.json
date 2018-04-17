@@ -31,7 +31,6 @@
         "no-duplicate-variable": true,
         "no-floating-promises": true,
         "no-for-in-array": true,
-        "no-implicit-dependencies": true,
         "no-invalid-template-strings": true,
         "no-invalid-this": true,
         "no-return-await": true,
@@ -43,7 +42,6 @@
         "prefer-conditional-expression": true,
         "restrict-plus-operands": true,
         "use-isnan": true,
-        "typeof-compare": true,
         "deprecation": true,
         "no-boolean-literal-compare": true,
         "prefer-template": true

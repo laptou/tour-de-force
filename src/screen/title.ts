@@ -1,43 +1,55 @@
-import { promisify } from "util";
-
-import { App, RenderParameters, ResumeParameters } from "..";
+import { App, ResumeParameters } from "..";
 import { IScreen } from "./base";
 
-export class TitleScreen implements IScreen
+export class TitleScreen extends PIXI.Container implements IScreen
 {
+    private logo: PIXI.Sprite | undefined;
+
+    public resume(params: ResumeParameters): void
+    {
+        console.log("resume() called");
+    }
+
+    public async intro(): Promise<void>
+    {
+        console.log("intro() called");
+    }
+    public async outro(): Promise<void>
+    {
+        console.log("outro() called");
+    }
+    public pause(): void
+    {
+        console.log("pause() called");
+    }
+    public async destroy(): Promise<void>
+    {
+        console.log("destroy() called");
+    }
+
+    public update(time: number, delta: number): void
+    {
+    }
+
     public async init(app: App): Promise<void>
     {
-        await promisify(app.loader.add("../../res/img/Logo Stylized.png").load);
+        console.log("init() called");
 
-    }
+        app.stage.addChild(this);
 
-    public resume(params: ResumeParameters): Promise<void>
-    {
-        throw new Error("Method not implemented.");
-    }
+        await new Promise(
+            (resolve, reject) => app.loader
+                .add("logo-stylized", require("@res/img/logo-stylized.png"))
+                .load(resolve)
+                .on("error", (loader, res) => reject(res)));
 
-    public intro(): Promise<void>
-    {
-        throw new Error("Method not implemented.");
-    }
+        this.logo = new PIXI.Sprite(app.resources["logo-stylized"].texture);
 
-    public outro(): Promise<void>
-    {
-        throw new Error("Method not implemented.");
-    }
+        console.log(this.logo);
 
-    public pause(): Promise<void>
-    {
-        throw new Error("Method not implemented.");
-    }
+        this.addChild(this.logo);
+        app.renderer.backgroundColor = 0x58C3D2;
 
-    public destroy(): Promise<void>
-    {
-        throw new Error("Method not implemented.");
-    }
-
-    public render(params: RenderParameters): void
-    {
-        throw new Error("Method not implemented.");
+        console.log("init() finished");
     }
 }
