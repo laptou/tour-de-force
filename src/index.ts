@@ -1,23 +1,50 @@
 import { IScreen } from "./screen/base";
+import { TitleScreen } from "./screen/title";
 import { last } from "./util";
 
-interface RenderParameters 
+export interface RenderParameters 
 {
     timestamp: number;
     resolution: { x: number; y: number; };
     renderer: PIXI.WebGLRenderer | PIXI.CanvasRenderer;
 }
 
-class App
+export interface ResumeParameters
+{
+    timestamp: number;
+}
+
+export class App
 {
     private pixi: PIXI.Application;
+    private manager: ScreenManager;
+
+    get loader()
+    {
+        return this.pixi.loader;
+    }
 
     constructor()
     {
         this.pixi = new PIXI.Application({ autoResize: true });
         this.pixi.start();
+        this.pixi.ticker.add(this.render);
+
+        const s = new TitleScreen();
+        this.manager = new ScreenManager();
+        this.manager.push(s, true);
+        s.init(this);
 
         document.body.appendChild(this.pixi.view);
+    }
+
+    public render(deltaTime: number): any
+    {
+        this.manager.render({
+            renderer: this.pixi.renderer,
+            timestamp: this.pixi.ticker.lastTime,
+            resolution: { x: 0, y: 0 }
+        })
     }
 }
 
@@ -28,10 +55,30 @@ class ScreenManager
 
     public push(screen: IScreen, replace: boolean = true)
     {
-        if (replace) this.renderStack = [screen];
-        else this.renderStack.push(screen);
+        if (replace)
+        {
+            this.renderStack.forEach(async s =>
+            {
+                await s.outro();
+                await s.pause();
+                s.destroy();
+            });
+
+            this.renderStack = [screen];
+        }
+        else
+        {
+            const current = last(this.renderStack);
+            if (current)
+                current.pause();
+
+            this.renderStack.push(screen);
+        }
 
         this.backStack.push(screen);
+
+        screen.resume({ timestamp: 0 });
+        screen.intro();
     }
 
     public pop()
@@ -39,8 +86,9 @@ class ScreenManager
         this.backStack.pop();
         this.renderStack.pop();
 
-        if (this.renderStack.length == 0)
-            this.renderStack = [last(this.backStack)];
+        const next = last(this.backStack);
+
+        if (next) this.renderStack = [next];
     }
 
     public render(params: RenderParameters)

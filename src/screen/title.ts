@@ -1,24 +1,42 @@
+import { promisify } from "util";
+
+import { App, RenderParameters, ResumeParameters } from "..";
 import { IScreen } from "./base";
 
 export class TitleScreen implements IScreen
 {
-    init(): void
+    public async init(app: App): Promise<void>
+    {
+        await promisify(app.loader.add("../../res/img/Logo Stylized.png").load);
+
+    }
+
+    public resume(params: ResumeParameters): Promise<void>
     {
         throw new Error("Method not implemented.");
     }
-    resume(): void
+
+    public intro(): Promise<void>
     {
         throw new Error("Method not implemented.");
     }
-    pause(): void
+
+    public outro(): Promise<void>
     {
         throw new Error("Method not implemented.");
     }
-    destroy(): void
+
+    public pause(): Promise<void>
     {
         throw new Error("Method not implemented.");
     }
-    render(params: RenderParameters): void
+
+    public destroy(): Promise<void>
+    {
+        throw new Error("Method not implemented.");
+    }
+
+    public render(params: RenderParameters): void
     {
         throw new Error("Method not implemented.");
     }
