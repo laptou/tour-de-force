@@ -1,9 +1,10 @@
+import { Tween } from "@tweenjs/tween.js";
 import * as PIXI from "pixi.js";
 
 import { App, ResumeParameters } from "..";
 import { IScreen } from "./base";
 
-const { sin, cos } = Math;
+const { sin, cos, random, PI } = Math;
 
 export class TitleScreen extends PIXI.Container implements IScreen
 {
@@ -18,7 +19,12 @@ export class TitleScreen extends PIXI.Container implements IScreen
 
     public async intro(): Promise<void>
     {
-        console.log("intro() called");
+        if (this.filters != null)
+        {
+            const alpha = this.filters[0] as PIXI.filters.AlphaFilter;
+            alpha.alpha = 0;
+            new Tween(alpha).to({ alpha: 1 }, 2000).delay(500).start();
+        }
     }
     public async outro(): Promise<void>
     {
@@ -44,15 +50,31 @@ export class TitleScreen extends PIXI.Container implements IScreen
             this.grid.tilePosition.x += delta / 1000 * 50;
             this.grid.tilePosition.y += delta / 1000 * 50;
         }
+
+        if (this.logo)
+        {
+            if (this.logo.filters)
+            {
+                const filter = this.logo.filters[0] as PIXI.filters.ColorMatrixFilter;
+                filter.saturate(sin(time / 500 * PI) * 0.2);
+            }
+
+            this.logo.position.set(
+                this.app.resolution.width / 2 + random() * 2.5,
+                this.app.resolution.height / 2 + random() * 2.5);
+        }
     }
 
     public async init(app: App): Promise<void>
     {
         this.app = app;
 
-        console.log("init() called");
-
         app.stage.addChild(this);
+
+        const bg = new PIXI.Sprite(PIXI.Texture.WHITE);
+        bg.width = app.resolution.width;
+        bg.height = app.resolution.height;
+        this.addChild(bg);
 
         await new Promise(
             (resolve, reject) => app.loader
@@ -90,10 +112,21 @@ export class TitleScreen extends PIXI.Container implements IScreen
         this.logo = new PIXI.Sprite(app.resources["logo-stylized"].texture);
         this.logo.anchor.set(0.5);
         this.logo.position.set(app.resolution.width / 2, app.resolution.height / 2);
+        this.logo.filters = [new PIXI.filters.ColorMatrixFilter()];
         this.addChild(this.logo);
 
-        app.renderer.backgroundColor = 0xFFFFFF;
+        const attribution = new PIXI.Text();
+        attribution.text = "By Ibiyemi Abiodun";
+        attribution.anchor.set(0, 1);
+        attribution.position.set(10, app.resolution.height - 10);
+        attribution.style.fontFamily = "Montserrat";
+        attribution.style.stroke = 0xFFFFFF;
+        attribution.style.strokeThickness = 3;
+        attribution.style.fontWeight = "900";
+        this.addChild(attribution);
 
-        console.log("init() finished");
+        this.filters = [new PIXI.filters.AlphaFilter(1)];
+
+        app.renderer.backgroundColor = 0;
     }
 }

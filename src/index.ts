@@ -1,3 +1,4 @@
+import * as TWEEN from "@tweenjs/tween.js";
 import * as PIXI from "pixi.js";
 
 import { IScreen } from "./screen/base";
@@ -110,10 +111,9 @@ export class App
         document.body.appendChild(this.pixi.view);
 
         const s = new TitleScreen();
-        s.init(this).catch(alert);
+        s.init(this).then(() => this.manager.push(s, true)).catch(console.error);
 
         this.manager = new ScreenManager();
-        this.manager.push(s, true);
 
         this.pixi.start();
 
@@ -131,6 +131,7 @@ export class App
         const delta = time - (this.lastFrame === -1 ? time : this.lastFrame);
         this.lastFrame = time;
 
+        TWEEN.update(time);
         this.manager.update(time, delta);
         this.pixi.render();
 
