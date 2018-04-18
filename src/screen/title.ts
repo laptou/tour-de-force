@@ -20,8 +20,8 @@ export class TitleScreen extends PIXI.Container implements IScreen
         if (this.grid && !this.grid.filters)
         {
             this.grid.filters = [new ShockwaveFilter(e.data.getLocalPosition(this.grid), {
-                wavelength: 50,
-                amplitude: 50,
+                wavelength: 200,
+                amplitude: 200,
                 speed: 800
             })];
         }

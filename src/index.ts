@@ -42,12 +42,12 @@ class ScreenManager
 
     public pop()
     {
-        const behind = last(this.backStack);
-        const below = last(this.renderStack);
+        const hist = last(this.backStack);
+        const view = last(this.renderStack);
 
-        if (behind === below) this.backStack.pop();
+        if (hist === view) this.backStack.pop();
 
-        if (below != null)
+        if (view != null)
             (async s =>
             {
                 await s.outro();
@@ -56,9 +56,32 @@ class ScreenManager
 
                 this.renderStack.pop();
 
+                if (this.renderStack.length == 0)
+                {
+                    const next = last(this.backStack);
+
+
+                    if (next != null)
+                    {
+                        next.resume({ timestamp: 0 });
+                        await next.intro();
+
+                        this.renderStack = [next];
+                    }
+                }
+                else
+                {
+                    const next = last(this.renderStack);
+
+                    if (next != null)
+                    {
+                        next.resume({ timestamp: 0 });
+                    }
+                }
+
                 await s.destroy();
 
-            })(below).catch(null);
+            })(view).catch(null);
     }
 
     public update(time: number, delta: number)
