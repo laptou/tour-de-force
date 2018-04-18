@@ -1,20 +1,40 @@
+import { ShockwaveFilter } from "@pixi/filter-shockwave";
 import { Tween } from "@tweenjs/tween.js";
 import * as PIXI from "pixi.js";
 
 import { App, ResumeParameters } from "..";
 import { IScreen } from "./base";
 
-const { sin, cos, random, PI } = Math;
+const { sin, cos, random, sqrt, PI } = Math;
 
 export class TitleScreen extends PIXI.Container implements IScreen
 {
+
     private grid: PIXI.extras.TilingSprite | undefined;
     private logo: PIXI.Sprite | undefined;
+    private logoGroup: PIXI.Container | undefined;
     private app: App | undefined;
+
+    public pointerdown(e: PIXI.interaction.InteractionEvent)
+    {
+        if (this.grid && !this.grid.filters)
+        {
+            this.grid.filters = [new ShockwaveFilter(e.data.getLocalPosition(this.grid), {
+                wavelength: 50,
+                amplitude: 50,
+                speed: 800
+            })];
+        }
+
+        if (this.app)
+        {
+            this.app.manager.pop();
+        }
+    }
 
     public resume(params: ResumeParameters): void
     {
-        console.log("resume() called");
+
     }
 
     public async intro(): Promise<void>
@@ -26,17 +46,29 @@ export class TitleScreen extends PIXI.Container implements IScreen
             new Tween(alpha).to({ alpha: 1 }, 2000).delay(500).start();
         }
     }
-    public async outro(): Promise<void>
+    public outro(): Promise<void>
     {
-        console.log("outro() called");
+        return new Promise(resolve =>
+        {
+            if (this.filters != null)
+            {
+                const alpha = this.filters[0] as PIXI.filters.AlphaFilter;
+                new Tween(alpha).to({ alpha: 0 }, 2000).delay(500).onComplete(resolve).start();
+            }
+        });
     }
+
     public pause(): void
     {
         console.log("pause() called");
     }
+
     public async destroy(): Promise<void>
     {
-        console.log("destroy() called");
+        if (this.app)
+            this.app.stage.removeChild(this);
+
+        super.destroy({ children: true });
     }
 
     public update(time: number, delta: number): void
@@ -49,13 +81,31 @@ export class TitleScreen extends PIXI.Container implements IScreen
         {
             this.grid.tilePosition.x += delta / 1000 * 50;
             this.grid.tilePosition.y += delta / 1000 * 50;
+
+            if (this.grid.filters)
+            {
+                const filter = this.grid.filters[0];
+
+                if (filter instanceof ShockwaveFilter)
+                {
+                    filter.time += delta / 1000;
+
+                    const diag = sqrt(this.app.resolution.height * this.app.resolution.height +
+                        this.app.resolution.width * this.app.resolution.width);
+
+                    if (filter.time * (filter as any).speed > diag)
+                    {
+                        this.grid.filters = null;
+                    }
+                }
+            }
         }
 
-        if (this.logo)
+        if (this.logo && this.logoGroup)
         {
-            if (this.logo.filters)
+            if (this.logoGroup.filters)
             {
-                const filter = this.logo.filters[0] as PIXI.filters.ColorMatrixFilter;
+                const filter = this.logoGroup.filters[0] as PIXI.filters.ColorMatrixFilter;
                 filter.saturate(sin(time / 500 * PI) * 0.2);
             }
 
@@ -68,8 +118,7 @@ export class TitleScreen extends PIXI.Container implements IScreen
     public async init(app: App): Promise<void>
     {
         this.app = app;
-
-        app.stage.addChild(this);
+        this.app.stage.addChild(this);
 
         const bg = new PIXI.Sprite(PIXI.Texture.WHITE);
         bg.width = app.resolution.width;
@@ -109,23 +158,46 @@ export class TitleScreen extends PIXI.Container implements IScreen
         this.addChild(this.grid);
         //#endregion
 
+        this.logoGroup = new PIXI.Container();
+        this.logoGroup.filters = [new PIXI.filters.ColorMatrixFilter()];
+
         this.logo = new PIXI.Sprite(app.resources["logo-stylized"].texture);
         this.logo.anchor.set(0.5);
         this.logo.position.set(app.resolution.width / 2, app.resolution.height / 2);
-        this.logo.filters = [new PIXI.filters.ColorMatrixFilter()];
-        this.addChild(this.logo);
+        this.logoGroup.addChild(this.logo);
+
+        const instructions = new PIXI.Text();
+        instructions.text = "Click to start!";
+        instructions.style.fontFamily = "Montserrat";
+        instructions.style.fontWeight = "900";
+        instructions.style.fill = 0xAA0000;
+        instructions.style.stroke = 0xFFFFFF;
+        instructions.style.strokeThickness = 3;
+        instructions.anchor.set(0.5, 0);
+        instructions.position.set(app.resolution.width / 2, app.resolution.height / 2 + 100);
+        this.logoGroup.addChild(instructions);
+
+        this.addChild(this.logoGroup);
 
         const attribution = new PIXI.Text();
         attribution.text = "By Ibiyemi Abiodun";
         attribution.anchor.set(0, 1);
         attribution.position.set(10, app.resolution.height - 10);
-        attribution.style.fontFamily = "Montserrat";
+        attribution.style.fontFamily = "Clear Sans";
+        attribution.style.fontSize = 12;
         attribution.style.stroke = 0xFFFFFF;
         attribution.style.strokeThickness = 3;
-        attribution.style.fontWeight = "900";
+        attribution.style.fontWeight = "500";
         this.addChild(attribution);
 
         this.filters = [new PIXI.filters.AlphaFilter(1)];
+
+        this.interactive = true;
+        this.interactiveChildren = false;
+        this.hitArea = new PIXI.Rectangle(0, 0, app.resolution.width, app.resolution.height);
+        // NOTE: this class has a method called pointerdown
+        // this gets called by event listener automatically, which means there is no need
+        // for .on(); that will make the event get called TWICE
 
         app.renderer.backgroundColor = 0;
     }

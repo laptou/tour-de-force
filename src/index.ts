@@ -42,12 +42,23 @@ class ScreenManager
 
     public pop()
     {
-        this.backStack.pop();
-        this.renderStack.pop();
+        const behind = last(this.backStack);
+        const below = last(this.renderStack);
 
-        const next = last(this.backStack);
+        if (behind === below) this.backStack.pop();
 
-        if (next) this.renderStack = [next];
+        if (below != null)
+            (async s =>
+            {
+                await s.outro();
+
+                s.pause();
+
+                this.renderStack.pop();
+
+                await s.destroy();
+
+            })(below).catch(null);
     }
 
     public update(time: number, delta: number)
@@ -73,8 +84,9 @@ export interface ResumeParameters
 
 export class App
 {
+    public manager: ScreenManager;
+
     private pixi: PIXI.Application;
-    private manager: ScreenManager;
     private lastFrame: number = -1;
 
     get loader()
@@ -137,6 +149,7 @@ export class App
 
         requestAnimationFrame(this.render.bind(this));
     }
+
 }
 
 
