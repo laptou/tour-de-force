@@ -1,0 +1,32 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist/",
+        "module": "esnext",
+        "target": "es2015",
+        "sourceMap": true,
+        "strict": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "moduleResolution": "node",
+        "experimentalDecorators": true,
+        "allowJs": true,
+        "allowSyntheticDefaultImports": true,
+        "baseUrl": ".",
+        "paths": {
+            "@screen/*": [
+                "src/screen/*"
+            ],
+            "@control/*": [
+                "src/control/*"
+            ],
+            "@shader/*": [
+                "src/shader/*"
+            ]
+        }
+    },
+    "exclude": [
+        "node_modules"
+    ],
+    "include": [
+        "src/**/*.ts"
+    ]
+}
