@@ -14,6 +14,12 @@
         "paths": {
             "@screen/*": [
                 "src/screen/*"
+            ],
+            "@control/*": [
+                "src/control/*"
+            ],
+            "@shader/*": [
+                "src/shader/*"
             ]
         }
     },

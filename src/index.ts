@@ -14,30 +14,29 @@ class ScreenManager
     {
         if (replace)
         {
-            this.renderStack.forEach(async s =>
+
+            Promise.all(this.renderStack.map(async s =>
             {
                 await s.outro();
 
                 s.pause();
 
                 await s.destroy();
-            });
-
-            this.renderStack = [screen];
+            })).then(() => this.renderStack = [screen]).catch(console.error);
         }
         else
         {
             const current = last(this.renderStack);
             if (current)
                 current.pause();
-
-            this.renderStack.push(screen);
         }
 
         this.backStack.push(screen);
 
         screen.resume({ timestamp: 0 });
         screen.intro().catch(null);
+
+        this.renderStack.push(screen);
     }
 
     public pop()
@@ -139,11 +138,16 @@ export class App
 
     constructor()
     {
-        this.pixi = new PIXI.Application({ autoResize: true, resolution: window.devicePixelRatio || 1 });
+        const scale = window.devicePixelRatio;
+        PIXI.settings.RESOLUTION = scale;
+        PIXI.settings.FILTER_RESOLUTION = scale;
+
+        this.pixi = new PIXI.Application({ resolution: 2 });
 
         this.renderer.resize(window.innerWidth, window.innerHeight);
 
-        document.body.appendChild(this.pixi.view);
+        const view = this.pixi.view;
+        document.body.appendChild(view);
 
         const s = new TitleScreen();
         s.init(this).then(() => this.manager.push(s, true)).catch(console.error);
@@ -151,26 +155,14 @@ export class App
         this.manager = new ScreenManager();
 
         this.pixi.start();
-
-        console.log(window.innerWidth);
-        console.log(window.innerHeight);
-        console.log(this.resolution);
-        console.log(this.pixi.renderer.width);
-        console.log(this.pixi.renderer.height);
-
-        requestAnimationFrame(this.render.bind(this));
+        this.pixi.ticker.add(this.render, this);
     }
 
-    public render(time: number): any
+    public render(): any
     {
-        const delta = time - (this.lastFrame === -1 ? time : this.lastFrame);
-        this.lastFrame = time;
-
-        TWEEN.update(time);
-        this.manager.update(time, delta);
+        TWEEN.update(this.pixi.ticker.lastTime);
+        this.manager.update(this.pixi.ticker.lastTime, this.pixi.ticker.elapsedMS);
         this.pixi.render();
-
-        requestAnimationFrame(this.render.bind(this));
     }
 
 }

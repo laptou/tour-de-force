@@ -3,14 +3,16 @@ import { Tween } from "@tweenjs/tween.js";
 import * as PIXI from "pixi.js";
 
 import { App, ResumeParameters } from "..";
+import { Grid } from "../control/grid";
 import { IScreen } from "./base";
+import { LevelScreen } from "./level";
 
 const { sin, cos, random, sqrt, PI } = Math;
 
 export class TitleScreen extends PIXI.Container implements IScreen
 {
 
-    private grid: PIXI.extras.TilingSprite | undefined;
+    private grid: Grid | undefined;
     private logo: PIXI.Sprite | undefined;
     private logoGroup: PIXI.Container | undefined;
     private app: App | undefined;
@@ -19,16 +21,21 @@ export class TitleScreen extends PIXI.Container implements IScreen
     {
         if (this.grid && !this.grid.filters)
         {
-            this.grid.filters = [new ShockwaveFilter(e.data.getLocalPosition(this.grid), {
+            const shockwave = new ShockwaveFilter(e.data.getLocalPosition(this.grid), {
                 wavelength: 200,
                 amplitude: 200,
-                speed: 800
-            })];
+                speed: 2400
+            });
+            this.grid.filters = [shockwave];
+            new Tween(shockwave).to({ time: 5 }, 5000).start();
         }
 
         if (this.app)
         {
-            this.app.manager.pop();
+            const next = new LevelScreen();
+            next.init(this.app)
+                .then(() => this.app && this.app.manager.push(next, true))
+                .catch(null);
         }
     }
 
@@ -37,15 +44,19 @@ export class TitleScreen extends PIXI.Container implements IScreen
 
     }
 
-    public async intro(): Promise<void>
+    public intro(): Promise<void>
     {
-        if (this.filters != null)
+        return new Promise(resolve =>
         {
-            const alpha = this.filters[0] as PIXI.filters.AlphaFilter;
-            alpha.alpha = 0;
-            new Tween(alpha).to({ alpha: 1 }, 2000).delay(500).start();
-        }
+            if (this.filters != null)
+            {
+                const alpha = this.filters[0] as PIXI.filters.AlphaFilter;
+                alpha.alpha = 0;
+                new Tween(alpha).to({ alpha: 1 }, 2000).delay(500).onComplete(resolve).start();
+            }
+        });
     }
+
     public outro(): Promise<void>
     {
         return new Promise(resolve =>
@@ -53,7 +64,7 @@ export class TitleScreen extends PIXI.Container implements IScreen
             if (this.filters != null)
             {
                 const alpha = this.filters[0] as PIXI.filters.AlphaFilter;
-                new Tween(alpha).to({ alpha: 0 }, 2000).delay(500).onComplete(resolve).start();
+                new Tween(alpha).to({ alpha: 0 }, 500).delay(500).onComplete(resolve).start();
             }
         });
     }
@@ -79,26 +90,8 @@ export class TitleScreen extends PIXI.Container implements IScreen
 
         if (this.grid)
         {
-            this.grid.tilePosition.x += delta / 1000 * 50;
-            this.grid.tilePosition.y += delta / 1000 * 50;
-
-            if (this.grid.filters)
-            {
-                const filter = this.grid.filters[0];
-
-                if (filter instanceof ShockwaveFilter)
-                {
-                    filter.time += delta / 1000;
-
-                    const diag = sqrt(this.app.resolution.height * this.app.resolution.height +
-                        this.app.resolution.width * this.app.resolution.width);
-
-                    if (filter.time * (filter as any).speed > diag)
-                    {
-                        this.grid.filters = null;
-                    }
-                }
-            }
+            this.grid.tilePosition.x = time / 20 % 2000;
+            this.grid.tilePosition.y = time / 20 % 2000;
         }
 
         if (this.logo && this.logoGroup)
@@ -128,35 +121,14 @@ export class TitleScreen extends PIXI.Container implements IScreen
         await new Promise(
             (resolve, reject) => app.loader
                 .add("logo-stylized", require("@res/img/logo-stylized.png"))
+                .add("item-sprites", require("@res/img/item-sprites.png"))
+                .add("control-sprites", require("@res/img/control-sprites.png"))
                 .load(resolve)
                 .on("error", (loader, res) => reject(res)));
 
-        //#region generate grid
-        const gridGraphics = new PIXI.Graphics();
-        gridGraphics.clear();
-        gridGraphics.lineStyle(1.5, 0x000000, 0.5);
 
-        for (let i = 0; i <= 128; i += 16)
-        {
-            gridGraphics
-                .moveTo(i, 0)
-                .lineTo(i, app.resolution.height);
-        }
-
-        for (let i = 0; i <= 128; i += 16)
-        {
-            gridGraphics
-                .moveTo(0, i)
-                .lineTo(app.resolution.width, i);
-        }
-
-        const gridTex = new PIXI.RenderTexture(new PIXI.BaseRenderTexture(128, 128));
-        app.renderer.render(gridGraphics, gridTex);
-
-        this.grid = new PIXI.extras.TilingSprite(gridTex, app.resolution.width, app.resolution.height);
-
+        this.grid = new Grid(app.renderer, app.resolution.width, app.resolution.height);
         this.addChild(this.grid);
-        //#endregion
 
         this.logoGroup = new PIXI.Container();
         this.logoGroup.filters = [new PIXI.filters.ColorMatrixFilter()];
@@ -180,11 +152,11 @@ export class TitleScreen extends PIXI.Container implements IScreen
         this.addChild(this.logoGroup);
 
         const attribution = new PIXI.Text();
-        attribution.text = "By Ibiyemi Abiodun";
+        attribution.text = "© 2018 Ibiyemi Abiodun";
         attribution.anchor.set(0, 1);
         attribution.position.set(10, app.resolution.height - 10);
         attribution.style.fontFamily = "Clear Sans";
-        attribution.style.fontSize = 12;
+        attribution.style.fontSize = "10pt";
         attribution.style.stroke = 0xFFFFFF;
         attribution.style.strokeThickness = 3;
         attribution.style.fontWeight = "500";
@@ -202,3 +174,4 @@ export class TitleScreen extends PIXI.Container implements IScreen
         app.renderer.backgroundColor = 0;
     }
 }
+

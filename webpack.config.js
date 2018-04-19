@@ -52,13 +52,19 @@ module.exports = {
                 test: /\.(png|svg|jpg|gif)$/,
                 loader: "file-loader",
                 options: { name: "[path][name].[ext]" }
+            },
+            {
+                test: /\.glsl$/,
+                use: 'raw-loader'
             }
         ]
     },
     resolve: {
-        extensions: [".ts", ".js"],
+        extensions: [".ts", ".js", ".glsl"],
         alias: {
-            "@res": path.join(__dirname, "src/res")
+            "@res": path.join(__dirname, "src/res"),
+            "@shader": path.join(__dirname, "src/shader"),
+            "@control": path.join(__dirname, "src/control")
         }
     }
 };
