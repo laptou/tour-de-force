@@ -18,7 +18,6 @@ class ScreenManager
     {
         if (replace)
         {
-
             Promise.all(this.renderStack.map(async s =>
             {
                 await s.outro();
@@ -33,9 +32,9 @@ class ScreenManager
             const current = last(this.renderStack);
             if (current)
                 current.pause();
-        }
 
-        this.backStack.push(screen);
+            this.backStack.push(screen);
+        }
 
         screen.resume({ timestamp: 0 });
         screen.intro().catch(null);

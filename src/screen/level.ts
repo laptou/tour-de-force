@@ -172,6 +172,7 @@ export class LevelScreen extends PIXI.Container implements IScreen
         return promise(
             new Tween(this.mask.scale)
                 .to({ x: 0, y: 0 }, 500)
+                .easing(Easing.Circular.Out)
                 .start());
     }
 
@@ -179,9 +180,9 @@ export class LevelScreen extends PIXI.Container implements IScreen
     {
     }
 
-    public destroy(): Promise<void>
+    public async destroy(): Promise<void>
     {
-        throw new Error("Method not implemented.");
+        super.destroy({ children: true });
     }
 
     public update(time: number, delta: number): void
