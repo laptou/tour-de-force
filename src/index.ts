@@ -5,6 +5,10 @@ import { IScreen } from "./screen/base";
 import { TitleScreen } from "./screen/title";
 import { last } from "./util";
 
+const Stats = require("stats.js");
+const stats = new Stats();
+stats.showPanel(0);
+
 class ScreenManager 
 {
     private backStack: IScreen[] = [];
@@ -148,6 +152,7 @@ export class App
 
         const view = this.pixi.view;
         document.body.appendChild(view);
+        document.body.appendChild(stats.dom);
 
         const s = new TitleScreen();
         s.init(this).then(() => this.manager.push(s, true)).catch(console.error);
@@ -160,9 +165,11 @@ export class App
 
     public render(): any
     {
+        stats.begin();
         TWEEN.update(this.pixi.ticker.lastTime);
         this.manager.update(this.pixi.ticker.lastTime, this.pixi.ticker.elapsedMS);
         this.pixi.render();
+        stats.end();
     }
 
 }

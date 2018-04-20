@@ -33,6 +33,7 @@
     "pixi-filters": "^2.6.0",
     "pixi.js": "^4.7.3",
     "raw-loader": "^0.5.1",
+    "stats.js": "^0.17.0",
     "ts-loader": "^4.2.0",
     "tslint": "^5.9.1",
     "typescript": "^2.8.1",

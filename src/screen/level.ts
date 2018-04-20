@@ -36,6 +36,7 @@ class LevelTile extends PIXI.Container
             });
         label.anchor.set(0.5);
         label.position.set(64);
+        label.cacheAsBitmap = true;
 
         this.addChild(this.sprite);
         this.addChild(label);
@@ -128,7 +129,6 @@ export class LevelScreen extends PIXI.Container implements IScreen
 
         app.stage.addChild(this);
 
-        this.filters = [new PIXI.filters.AlphaFilter(1)];
     }
 
     public resume(params: ResumeParameters): void
@@ -137,12 +137,13 @@ export class LevelScreen extends PIXI.Container implements IScreen
 
     public async intro(): Promise<void>
     {
-        if (this.filters != null)
-        {
-            const alpha = this.filters[0] as PIXI.filters.AlphaFilter;
-            alpha.alpha = 0;
-            await promise(new Tween(alpha).to({ alpha: 1 }, 500).start());
-        }
+        if (this.filters == null)
+            this.filters = [new PIXI.filters.AlphaFilter(0)];
+
+
+        const alpha = this.filters[0] as PIXI.filters.AlphaFilter;
+        await promise(new Tween(alpha).to({ alpha: 1 }, 500).start());
+        this.filters = null; // remove filters when not in use to increase performance
 
         if (this.title != null)
         {
@@ -162,17 +163,16 @@ export class LevelScreen extends PIXI.Container implements IScreen
         mask.drawCircle(width / 2, height / 2, diag);
         mask.endFill();
 
-        const tex = this.app.renderer.generateTexture(mask);
-        const smask = new PIXI.Sprite(tex);
-        smask.anchor.set(0.5);
+        if (this.hitPoint) mask.position.set(this.hitPoint.x, this.hitPoint.y);
 
-        if (this.hitPoint) smask.position.set(this.hitPoint.x, this.hitPoint.y);
+        this.mask = mask;
 
-        this.mask = smask;
+        this.addChild(mask);
 
-        this.addChild(smask);
-
-        return promise(new Tween(smask.scale).to({ x: 0, y: 0 }, 500).start());
+        return promise(
+            new Tween(this.mask.scale)
+                .to({ x: 0, y: 0 }, 500)
+                .start());
     }
 
     public pause(): void

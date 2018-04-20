@@ -1,9 +1,0 @@
-{
-    "files.exclude": {
-        "rain-library-client/dist": true,
-        "**/.cache-loader": true,
-        "**/*.js.map": true,
-        "**/*.js": {"when": "$(basename).ts"},
-        "**/*.d.ts": {"when": "$(basename).ts"}
-    }
-}
