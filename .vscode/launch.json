@@ -5,29 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-<<<<<<< HEAD
-            "type": "node",
-            "request": "launch",
-            "name": "Server",
-            "sourceMaps": true,
-            "program": "${workspaceFolder}\\rain-library-server\\server.js"
-        },
-        {
-            "type": "chrome",
-            "name": "Client",
-            "request": "launch",
-            "url": "http://localhost:8000/",
-            "webRoot": "${workspaceFolder}\\rain-library-client\\dist",
-            "sourceMapPathOverrides": {
-                "webpack:///./src/*": "${workspaceFolder}/rain-library-client/src/*",
-            }
-        }        
-    ],
-    "compounds": [
-        {
-            "name": "Server/Client",
-            "configurations": ["Server", "Client"]
-=======
             "type": "chrome",
             "request": "launch",
             "name": "Chrome",
@@ -37,7 +14,6 @@
                 "--disable-web-security",
                 "--allow-file-access-from-files"
             ]
->>>>>>> title-screen
         }
     ]
 }

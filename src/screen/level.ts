@@ -36,10 +36,7 @@ class LevelTile extends PIXI.Container
             });
         label.anchor.set(0.5);
         label.position.set(64);
-<<<<<<< HEAD
-=======
         label.cacheAsBitmap = true;
->>>>>>> title-screen
 
         this.addChild(this.sprite);
         this.addChild(label);
@@ -132,10 +129,6 @@ export class LevelScreen extends PIXI.Container implements IScreen
 
         app.stage.addChild(this);
 
-<<<<<<< HEAD
-        this.filters = [new PIXI.filters.AlphaFilter(1)];
-=======
->>>>>>> title-screen
     }
 
     public resume(params: ResumeParameters): void
@@ -144,14 +137,6 @@ export class LevelScreen extends PIXI.Container implements IScreen
 
     public async intro(): Promise<void>
     {
-<<<<<<< HEAD
-        if (this.filters != null)
-        {
-            const alpha = this.filters[0] as PIXI.filters.AlphaFilter;
-            alpha.alpha = 0;
-            await promise(new Tween(alpha).to({ alpha: 1 }, 500).start());
-        }
-=======
         if (this.filters == null)
             this.filters = [new PIXI.filters.AlphaFilter(0)];
 
@@ -159,7 +144,6 @@ export class LevelScreen extends PIXI.Container implements IScreen
         const alpha = this.filters[0] as PIXI.filters.AlphaFilter;
         await promise(new Tween(alpha).to({ alpha: 1 }, 500).start());
         this.filters = null; // remove filters when not in use to increase performance
->>>>>>> title-screen
 
         if (this.title != null)
         {
@@ -179,19 +163,6 @@ export class LevelScreen extends PIXI.Container implements IScreen
         mask.drawCircle(width / 2, height / 2, diag);
         mask.endFill();
 
-<<<<<<< HEAD
-        const tex = this.app.renderer.generateTexture(mask);
-        const smask = new PIXI.Sprite(tex);
-        smask.anchor.set(0.5);
-
-        if (this.hitPoint) smask.position.set(this.hitPoint.x, this.hitPoint.y);
-
-        this.mask = smask;
-
-        this.addChild(smask);
-
-        return promise(new Tween(smask.scale).to({ x: 0, y: 0 }, 500).start());
-=======
         if (this.hitPoint) mask.position.set(this.hitPoint.x, this.hitPoint.y);
 
         this.mask = mask;
@@ -203,22 +174,15 @@ export class LevelScreen extends PIXI.Container implements IScreen
                 .to({ x: 0, y: 0 }, 500)
                 .easing(Easing.Circular.Out)
                 .start());
->>>>>>> title-screen
     }
 
     public pause(): void
     {
     }
 
-<<<<<<< HEAD
-    public destroy(): Promise<void>
-    {
-        throw new Error("Method not implemented.");
-=======
     public async destroy(): Promise<void>
     {
         super.destroy({ children: true });
->>>>>>> title-screen
     }
 
     public update(time: number, delta: number): void

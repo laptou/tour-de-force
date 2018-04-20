@@ -64,12 +64,8 @@ module.exports = {
         alias: {
             "@res": path.join(__dirname, "src/res"),
             "@shader": path.join(__dirname, "src/shader"),
-<<<<<<< HEAD
-            "@control": path.join(__dirname, "src/control")
-=======
             "@control": path.join(__dirname, "src/control"),
             "@screen": path.join(__dirname, "src/screen"),
->>>>>>> title-screen
         }
     }
 };
