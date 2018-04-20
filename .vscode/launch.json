@@ -5,6 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
+<<<<<<< HEAD
             "type": "node",
             "request": "launch",
             "name": "Server",
@@ -26,6 +27,17 @@
         {
             "name": "Server/Client",
             "configurations": ["Server", "Client"]
+=======
+            "type": "chrome",
+            "request": "launch",
+            "name": "Chrome",
+            "url": "${workspaceFolder}/dist/index.html",
+            "webRoot": "${workspaceFolder}",
+            "runtimeArgs": [
+                "--disable-web-security",
+                "--allow-file-access-from-files"
+            ]
+>>>>>>> title-screen
         }
     ]
 }

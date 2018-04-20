@@ -5,6 +5,13 @@ import { IScreen } from "./screen/base";
 import { TitleScreen } from "./screen/title";
 import { last } from "./util";
 
+<<<<<<< HEAD
+=======
+const Stats = require("stats.js");
+const stats = new Stats();
+stats.showPanel(0);
+
+>>>>>>> title-screen
 class ScreenManager 
 {
     private backStack: IScreen[] = [];
@@ -14,7 +21,10 @@ class ScreenManager
     {
         if (replace)
         {
+<<<<<<< HEAD
 
+=======
+>>>>>>> title-screen
             Promise.all(this.renderStack.map(async s =>
             {
                 await s.outro();
@@ -29,9 +39,15 @@ class ScreenManager
             const current = last(this.renderStack);
             if (current)
                 current.pause();
+<<<<<<< HEAD
         }
 
         this.backStack.push(screen);
+=======
+
+            this.backStack.push(screen);
+        }
+>>>>>>> title-screen
 
         screen.resume({ timestamp: 0 });
         screen.intro().catch(null);
@@ -148,6 +164,10 @@ export class App
 
         const view = this.pixi.view;
         document.body.appendChild(view);
+<<<<<<< HEAD
+=======
+        document.body.appendChild(stats.dom);
+>>>>>>> title-screen
 
         const s = new TitleScreen();
         s.init(this).then(() => this.manager.push(s, true)).catch(console.error);
@@ -160,9 +180,17 @@ export class App
 
     public render(): any
     {
+<<<<<<< HEAD
         TWEEN.update(this.pixi.ticker.lastTime);
         this.manager.update(this.pixi.ticker.lastTime, this.pixi.ticker.elapsedMS);
         this.pixi.render();
+=======
+        stats.begin();
+        TWEEN.update(this.pixi.ticker.lastTime);
+        this.manager.update(this.pixi.ticker.lastTime, this.pixi.ticker.elapsedMS);
+        this.pixi.render();
+        stats.end();
+>>>>>>> title-screen
     }
 
 }
