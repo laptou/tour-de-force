@@ -5,9 +5,8 @@ import * as PIXI from "pixi.js";
 
 import { App, ResumeParameters } from "..";
 import { Grid } from "../control/grid";
-import { promise, promise } from "../util";
-import { IScreen, IScreen } from "./base";
-import { LevelScreen } from "./level";
+import { promise } from "../util";
+import { IScreen } from "./base";
 
 const { sin, cos, random, sqrt, PI } = Math;
 
