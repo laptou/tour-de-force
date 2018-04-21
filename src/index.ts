@@ -167,7 +167,8 @@ export class App
         stats.begin();
         TWEEN.update(this.pixi.ticker.lastTime);
         this.manager.update(this.pixi.ticker.lastTime, this.pixi.ticker.elapsedMS);
-        this.pixi.render();
+        // do not call pixi.render() ... apparently that's already being called
+        // and you were trying to render twice on every frame
         stats.end();
     }
 

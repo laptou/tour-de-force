@@ -41,20 +41,20 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.ts$/,
+                test: /\.ts$/i,
                 use: {
                     loader: "ts-loader",
                     options: { transpileOnly: true }
                 },
-                exclude: /node_modules/
+                exclude: /node_modules/i
             },
             {
-                test: /\.(png|svg|jpg|gif)$/,
+                test: /\.(png|svg|jpg|gif)$/i,
                 loader: "file-loader",
                 options: { name: "[path][name].[ext]" }
             },
             {
-                test: /\.glsl$/,
+                test: /\.(glsl|json)$/i,
                 use: 'raw-loader'
             }
         ]

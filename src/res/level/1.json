@@ -1,0 +1,15 @@
+{
+    "size": {
+        "width": 30,
+        "height": 30
+    },
+    "content": [
+        {
+            "type": "wood",
+            "position": {
+                "x": 2,
+                "y": 3
+            }
+        }
+    ]
+}
