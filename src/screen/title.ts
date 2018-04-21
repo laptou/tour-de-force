@@ -1,5 +1,5 @@
 import { ShockwaveFilter } from "@pixi/filter-shockwave";
-import { LevelScreen } from "@screen/level";
+import { SelectLevelScreen } from "@screen/select";
 import { Tween } from "@tweenjs/tween.js";
 import * as PIXI from "pixi.js";
 
@@ -31,7 +31,7 @@ export class TitleScreen extends PIXI.Container implements IScreen
 
         if (this.app)
         {
-            const next = new LevelScreen();
+            const next = new SelectLevelScreen();
             next.init(this.app)
                 .then(() => this.app && this.app.manager.push(next, true))
                 .catch(null);
