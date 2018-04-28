@@ -16,27 +16,30 @@ export class Grid extends PIXI.extras.TilingSprite
 
         const size = opts.spacing * 32;
 
-        for (let i = 0; i <= size; i += opts.spacing)
+        for (let i = 0; i < size; i += opts.spacing)
         {
             gridGraphics
                 .moveTo(i, 0)
                 .lineTo(i, size);
         }
 
-        for (let i = 0; i <= size; i += opts.spacing)
+        for (let i = 0; i < size; i += opts.spacing)
         {
             gridGraphics
                 .moveTo(0, i)
                 .lineTo(size, i);
         }
 
-        const gridTex = new PIXI.RenderTexture(
-            new PIXI.BaseRenderTexture(
-                size, size,
-                PIXI.SCALE_MODES.NEAREST));
+        const gridTex = renderer.generateTexture(gridGraphics);
 
-        renderer.render(gridGraphics, gridTex);
+        gridGraphics.destroy();
 
         super(gridTex, width, height);
+    }
+
+    public destroy(options?: PIXI.DestroyOptions | boolean)
+    {
+        this.texture.destroy(!!options);
+        super.destroy(options);
     }
 }

@@ -50,6 +50,7 @@ export class TitleScreen extends PIXI.Container implements IScreen
 
         const alpha = this.filters[0] as PIXI.filters.AlphaFilter;
         await promise(new Tween(alpha).to({ alpha: 1 }, 500).delay(500).start());
+        this.filters = null;
     }
 
     public async outro(): Promise<void>
@@ -59,6 +60,7 @@ export class TitleScreen extends PIXI.Container implements IScreen
 
         const alpha = this.filters[0] as PIXI.filters.AlphaFilter;
         await promise(new Tween(alpha).to({ alpha: 0 }, 500).delay(1000).start());
+        this.filters = null;
     }
 
     public pause(): void
@@ -105,9 +107,11 @@ export class TitleScreen extends PIXI.Container implements IScreen
         this.app = app;
         this.app.stage.addChild(this);
 
+        const { width, height } = app.resolution;
+
         const bg = new PIXI.Sprite(PIXI.Texture.WHITE);
-        bg.width = app.resolution.width;
-        bg.height = app.resolution.height;
+        bg.width = width;
+        bg.height = height;
         this.addChild(bg);
 
         await new Promise(
@@ -118,13 +122,12 @@ export class TitleScreen extends PIXI.Container implements IScreen
                 .load(resolve)
                 .on("error", (loader, res) => reject(res)));
 
-
-        this.grid = new Grid(app.renderer, app.resolution.width, app.resolution.height);
+        this.grid = new Grid(app.renderer, width, height);
         this.addChild(this.grid);
 
         this.logo = new PIXI.Sprite(app.resources["logo-stylized"].texture);
         this.logo.anchor.set(0.5);
-        this.logo.position.set(app.resolution.width / 2, app.resolution.height / 2);
+        this.logo.position.set(width / 2, height / 2);
         this.addChild(this.logo);
 
         this.instructions = new PIXI.Text();
@@ -135,14 +138,14 @@ export class TitleScreen extends PIXI.Container implements IScreen
         this.instructions.style.stroke = 0xFFFFFF;
         this.instructions.style.strokeThickness = 3;
         this.instructions.anchor.set(0.5, 0);
-        this.instructions.position.set(app.resolution.width / 2, app.resolution.height / 2 + 100);
+        this.instructions.position.set(width / 2, height / 2 + 100);
         this.instructions.cacheAsBitmap = true;
         this.addChild(this.instructions);
 
         const attribution = new PIXI.Text();
         attribution.text = "© 2018 Ibiyemi Abiodun";
         attribution.anchor.set(0, 1);
-        attribution.position.set(10, app.resolution.height - 10);
+        attribution.position.set(10, height - 10);
         attribution.style.fontFamily = "Clear Sans";
         attribution.style.fontSize = "10pt";
         attribution.style.stroke = 0xFFFFFF;
@@ -154,7 +157,7 @@ export class TitleScreen extends PIXI.Container implements IScreen
 
         this.interactive = true;
         this.interactiveChildren = false;
-        this.hitArea = new PIXI.Rectangle(0, 0, app.resolution.width, app.resolution.height);
+        this.hitArea = new PIXI.Rectangle(0, 0, width, height);
         // NOTE: this class has a method called pointerdown
         // this gets called by event listener automatically, which means there is no need
         // for .on(); that will make the event get called TWICE
