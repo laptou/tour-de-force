@@ -10,6 +10,10 @@ const plugins = [
     new ForkTsCheckerWebpackPlugin({
         tslint: true
     }),
+    new webpack.DllReferencePlugin({
+        context: __dirname,
+        manifest: require('./build/library/library.json')
+    }),
     // Generate skeleton HTML file
     new HtmlWebpackPlugin({
         inject: true,
