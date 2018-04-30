@@ -1,5 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
+const config = require("./config");
 
 module.exports = {
     context: process.cwd(),
@@ -7,10 +8,11 @@ module.exports = {
         extensions: ['.js', '.jsx', '.json', '.less', '.css'],
         modules: [__dirname, 'node_modules']
     },
-    plugins: [new webpack.DllPlugin({
-        name: '[name]',
-        path: './build/library/[name].json'
-    })],
+    plugins: [
+        new webpack.DllPlugin({
+            name: '[name]',
+            path: path.resolve(config.output, "library/[name].json")
+        })],
     entry: {
         library: [
             'pixi.js',
@@ -19,7 +21,7 @@ module.exports = {
     },
     output: {
         filename: '[name].dll.js',
-        path: path.resolve(__dirname, './build/library'),
+        path: path.resolve(config.output, 'library'),
         library: '[name]'
     }
 };

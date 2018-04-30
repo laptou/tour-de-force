@@ -1,2 +1,2 @@
 const path = require("path");
-module.exports = { output: path.join(__dirname, "dist/") };
+module.exports = { output: path.resolve(__dirname, "dist/") };
