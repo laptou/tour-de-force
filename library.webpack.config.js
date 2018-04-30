@@ -2,22 +2,23 @@ const path = require('path');
 const webpack = require('webpack');
 const config = require("./config");
 
-const phaser = path.resolve(__dirname, "node_modules/phaser/dist/phaser.js");
 
 module.exports = {
     context: process.cwd(),
     resolve: {
         extensions: ['.js', '.jsx', '.json', '.less', '.css'],
-        modules: [__dirname, 'node_modules'],
-        alias: {
-            phaser
-        }
+        modules: [__dirname, 'node_modules']
     },
     plugins: [
         new webpack.DllPlugin({
             name: '[name]',
             path: path.resolve(config.build, "library/[name].json")
-        })],
+        }),
+        new webpack.DefinePlugin({
+            'CANVAS_RENDERER': JSON.stringify(true),
+            'WEBGL_RENDERER': JSON.stringify(true)
+        })
+    ],
     entry: {
         library: [
             'stats.js',
@@ -27,7 +28,10 @@ module.exports = {
     module:
         {
             rules: [
-                { test: /phaser\.js$/, loader: 'expose-loader?Phaser' }
+                {
+                    test: /\.(glsl|vert|frag)$/i,
+                    use: 'raw-loader'
+                }
             ]
         },
     output: {

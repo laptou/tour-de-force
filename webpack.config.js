@@ -1,7 +1,6 @@
 const path = require("path");
 const webpack = require("webpack");
 const config = require("./config");
-const phaser = path.resolve(__dirname, "node_modules/phaser/dist/phaser.js");
 
 const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
@@ -60,7 +59,7 @@ module.exports = {
                 options: { name: "[path][name].[ext]" }
             },
             {
-                test: /\.(glsl|json)$/i,
+                test: /\.(glsl|json|vert|frag)$/i,
                 use: 'raw-loader'
             }
         ]
@@ -72,7 +71,6 @@ module.exports = {
             "@shader": path.join(__dirname, "src/shader"),
             "@control": path.join(__dirname, "src/control"),
             "@screen": path.join(__dirname, "src/screen"),
-            phaser
         }
     }
 };

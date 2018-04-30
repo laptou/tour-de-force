@@ -1,3 +1,5 @@
+import * as Phaser from "phaser";
+
 import { TitleScene } from "./scene/title";
 
 const Stats = require("stats.js");
@@ -12,7 +14,7 @@ class TourDeForceGame extends Phaser.Game
             height: window.innerHeight,
             width: window.innerWidth,
             type: Phaser.WEBGL,
-            backgroundColor: "#345678",
+            backgroundColor: "#000000",
             physics: { default: "matter" },
             scene: [new TitleScene()]
         })
