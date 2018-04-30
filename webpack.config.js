@@ -29,7 +29,7 @@ const plugins = [
 ];
 
 module.exports = {
-    devtool: "cheap-eval-source-map",
+    devtool: "eval-source-map",
     entry: "./src/index.ts",
     context: __dirname,
     plugins,

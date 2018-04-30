@@ -16,8 +16,12 @@ class TourDeForceGame extends Phaser.Game
             type: Phaser.WEBGL,
             backgroundColor: "#000000",
             physics: { default: "matter" },
-            scene: [new TitleScene()]
-        })
+            scene: [new TitleScene()],
+            autoResize: true,
+            resolution: window.devicePixelRatio
+        });
+
+        this.scene.start("title");
     }
 }
 
