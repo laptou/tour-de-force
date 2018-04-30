@@ -12,6 +12,17 @@
         },
         {
             "type": "shell",
+            "command": "http-server",
+            "options": {
+                "cwd": "${workspaceFolder}/dist/"
+            },
+            "label": "Web server",
+            "group": "none",
+            "isBackground": true,
+            "promptOnClose": false
+        },
+        {
+            "type": "shell",
             "command": "webpack",
             "args": [
                 "-w"
@@ -52,6 +63,30 @@
             "type": "shell",
             "command": "webpack --config library.webpack.config.js && webpack",
             "label": "Webpack (full build)",
+            "group": "build",
+            "promptOnClose": true,
+            "problemMatcher": {
+                "owner": "webpack",
+                "severity": "error",
+                "fileLocation": "relative",
+                "pattern": [
+                    {
+                        "regexp": "ERROR in (.*)",
+                        "file": 1
+                    },
+                    {
+                        "regexp": "\\((\\d+),(\\d+)\\):(.*)",
+                        "line": 1,
+                        "column": 2,
+                        "message": 3
+                    }
+                ]
+            }
+        },
+        {
+            "type": "shell",
+            "command": "webpack --config library.webpack.config.js",
+            "label": "Webpack (dll build)",
             "group": "build",
             "promptOnClose": true,
             "problemMatcher": {

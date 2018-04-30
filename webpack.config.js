@@ -1,5 +1,7 @@
 const path = require("path");
 const webpack = require("webpack");
+const config = require("./config");
+const phaser = path.resolve(__dirname, "node_modules/phaser/dist/phaser.js");
 
 const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
@@ -8,11 +10,12 @@ const HardSourceWebpackPlugin = require("hard-source-webpack-plugin");
 
 const plugins = [
     new ForkTsCheckerWebpackPlugin({
-        tslint: true
+        tslint: true,
+
     }),
     new webpack.DllReferencePlugin({
         context: __dirname,
-        manifest: require('./build/library/library.json')
+        manifest: require(path.resolve(config.build, "library/library.json"))
     }),
     // Generate skeleton HTML file
     new HtmlWebpackPlugin({
@@ -21,20 +24,19 @@ const plugins = [
         xhtml: true
     }),
     new CleanWebpackPlugin(["dist"], {
-        verbose: false
+        exclude: ["library"]
     }),
     new HardSourceWebpackPlugin()
 ];
 
 module.exports = {
-    devtool: "cheap-source-map",
-    entry: ["./src"],
+    devtool: "cheap-eval-source-map",
+    entry: "./src/index.ts",
     context: __dirname,
     plugins,
     output: {
-        path: require("./config").output,
-        // publicPath: "/",
-        filename: "bundle.js"
+        path: config.output,
+        filename: "[name].js",
     },
     optimization: {
         runtimeChunk: false,
@@ -70,6 +72,7 @@ module.exports = {
             "@shader": path.join(__dirname, "src/shader"),
             "@control": path.join(__dirname, "src/control"),
             "@screen": path.join(__dirname, "src/screen"),
+            phaser
         }
     }
 };
