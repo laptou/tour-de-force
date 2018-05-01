@@ -18,6 +18,8 @@ export class TitleScene extends Phaser.Scene
 
     public preload() 
     {
+        const game = this.sys.game;
+
         const graphics = this.make.graphics();
 
         graphics
@@ -40,6 +42,7 @@ export class TitleScene extends Phaser.Scene
 
         this.grid = this.add.tileSprite(width / 2, height / 2, width, height, "tile");
         this.logo = this.add.image(width / 2, height / 2, "logo");
+        this.logo.setPipeline("add-color");
 
         this.instructions = this.add
             .text(width / 2, height / 2 + 100, "Click anywhere to start!")
@@ -80,9 +83,8 @@ export class TitleScene extends Phaser.Scene
 
         if (this.logo)
         {
-            const phase = (sin(total / 500 * PI) + 1) / 16;
-
-            this.logo.tint = 0xFFFFFF - ((0xFF * phase) << 8) - (0xFF * phase);
+            const phase = (sin(total / 500 * PI) + 1) / 8;
+            // this.logo.pipeline.setFloat4("uIntensity", phase, 0, 0, phase);
             this.logo.setOrigin(0.5 + random() / 100 - 0.005, 0.5 + random() / 100 - 0.005);
         }
     }

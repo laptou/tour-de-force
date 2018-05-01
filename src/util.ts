@@ -14,3 +14,12 @@ export function noop<T>(): Promise<T>
 {
     return new Promise(resolve => resolve());
 }
+
+export function inset(rect: Phaser.Geom.Rectangle, amount: number)
+{
+    return rect.setTo(
+        rect.left + amount,
+        rect.top + amount,
+        rect.width - amount * 2,
+        rect.height - amount * 2);
+}

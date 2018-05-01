@@ -22,7 +22,13 @@ class TourDeForceGame extends Phaser.Game
             resolution: Math.floor(window.devicePixelRatio)
         });
 
+        this.events.on("ready", this.onready, this);
+
         this.scene.start("title");
+    }
+
+    public onready()
+    {
     }
 }
 
