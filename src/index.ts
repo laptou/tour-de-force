@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 
+import { LevelSelectScene } from "./scene/select";
 import { TitleScene } from "./scene/title";
 
 const Stats = require("stats.js");
@@ -14,11 +15,11 @@ class TourDeForceGame extends Phaser.Game
             height: window.innerHeight,
             width: window.innerWidth,
             type: Phaser.WEBGL,
-            backgroundColor: "#000000",
+            backgroundColor: "#FFFFFF",
             physics: { default: "matter" },
-            scene: [new TitleScene()],
+            scene: [new TitleScene(), new LevelSelectScene()],
             autoResize: true,
-            resolution: window.devicePixelRatio
+            resolution: Math.floor(window.devicePixelRatio)
         });
 
         this.scene.start("title");
