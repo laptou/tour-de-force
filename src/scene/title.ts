@@ -2,22 +2,18 @@ import * as Phaser from "phaser";
 
 const { sin, cos, random, PI, max } = Math;
 
-export class TitleScene extends Phaser.Scene
-{
+export class TitleScene extends Phaser.Scene {
 
     private instructions: Phaser.GameObjects.Text | undefined;
     private logo: Phaser.GameObjects.Image | undefined;
     private grid: Phaser.GameObjects.TileSprite | undefined;
     private speed: number = 0.05;
 
-    constructor()
-    {
+    constructor() {
         super({ key: "title" });
     }
 
-
-    public preload() 
-    {
+    public preload() {
         const game = this.sys.game;
 
         const graphics = this.make.graphics();
@@ -36,8 +32,7 @@ export class TitleScene extends Phaser.Scene
         this.load.image("logo", require("@res/img/logo-stylized.png"));
     }
 
-    public create()
-    {
+    public create() {
         const { width, height } = this.cameras.main;
 
         this.grid = this.add.tileSprite(width / 2, height / 2, width, height, "tile");
@@ -61,36 +56,30 @@ export class TitleScene extends Phaser.Scene
             .setStroke("#FFFFFF", 10)
             .setOrigin(0, 1);
 
-        this.input.once('pointerup', (event: any) =>
-        {
-            var transition = this.scene.transition({
+        this.input.once('pointerup', (event: any) => {
+            this.scene.transition({
                 target: 'level-select',
                 duration: 1000,
                 onUpdate: this.outro,
                 moveBelow: true
             });
-
         });
     }
 
-    public update(total: number, delta: number)
-    {
-        if (this.grid)
-        {
+    public update(total: number, delta: number) {
+        if (this.grid) {
             this.grid.tilePositionX = this.speed * total;
             this.grid.tilePositionY = this.speed * total;
         }
 
-        if (this.logo)
-        {
+        if (this.logo) {
             const phase = (sin(total / 500 * PI) + 1) / 8;
             // this.logo.pipeline.setFloat4("uIntensity", phase, 0, 0, phase);
             this.logo.setOrigin(0.5 + random() / 100 - 0.005, 0.5 + random() / 100 - 0.005);
         }
     }
 
-    private outro(progress: number)
-    {
+    private outro(progress: number) {
         this.speed = 0.05 + progress * progress * 0.15;
 
         if (this.logo) this.logo.alpha = max(0, 1 - progress * 1.7);
