@@ -1,0 +1,13 @@
+{
+    "size": 32,
+    "content": [
+        {
+            "type": "aluminum",
+            "control": true,
+            "position": [
+                2,
+                3
+            ]
+        }
+    ]
+}

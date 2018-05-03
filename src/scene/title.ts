@@ -25,7 +25,7 @@ export class TitleScene extends Phaser.Scene {
             .lineBetween(0, 0, 0, 16)
             .lineBetween(0, 0, 16, 0);
 
-        graphics.generateTexture("tile", 16, 16);
+        graphics.generateTexture("tile-16", 16, 16);
 
         graphics.destroy();
 
@@ -35,7 +35,7 @@ export class TitleScene extends Phaser.Scene {
     public create() {
         const { width, height } = this.cameras.main;
 
-        this.grid = this.add.tileSprite(width / 2, height / 2, width, height, "tile");
+        this.grid = this.add.tileSprite(width / 2, height / 2, width, height, "tile-16");
         this.logo = this.add.image(width / 2, height / 2, "logo");
         this.logo.setPipeline("add-color");
 

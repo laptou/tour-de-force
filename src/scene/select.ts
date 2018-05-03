@@ -25,7 +25,7 @@ export class LevelSelectScene extends Phaser.Scene {
     public create() {
         const { width, height } = this.cameras.main;
         const self = this as any;
-        this.grid = this.add.tileSprite(width / 2, height / 2, width, height, "tile");
+        this.grid = this.add.tileSprite(width / 2, height / 2, width, height, "tile-16");
 
         this.titleText =
             this.add.text(20, -50, "Choose a level")

@@ -59,7 +59,7 @@ module.exports = {
                 options: { name: "[path][name].[ext]" }
             },
             {
-                test: /\.(glsl|json|vert|frag)$/i,
+                test: /\.(glsl|vert|frag)$/i,
                 use: 'raw-loader'
             }
         ]
