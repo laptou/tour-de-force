@@ -1,20 +1,30 @@
+import { Button } from "@control/button";
 import * as Phaser from "phaser";
 
 const { sin, cos, random, PI, max, min } = Math;
 
 enum CrateType {
-    Wood, Steel, Aluminum
+    Wood = "wood", Steel = "steel", Aluminum = "aluminum"
+}
+
+enum Mode {
+    View,
+    Force
 }
 
 export class LevelScene extends Phaser.Scene {
 
     private level: any;
-    private levelIndex: number = -1;
+    private levelIndex!: number;
+
     private scale = 100; // 100px = 1m
     private pan = { x: 0, y: 0 };
-    private overlays: Phaser.GameObjects.Graphics | undefined;
-    private wood: Phaser.Physics.Matter.Image | undefined;
-    private grid: Phaser.GameObjects.TileSprite | undefined;
+    private mode = Mode.View;
+
+    private hud!: Phaser.GameObjects.Container;
+    private overlays!: Phaser.GameObjects.Graphics;
+    private wood!: Phaser.Physics.Matter.Image;
+    private grid!: Phaser.GameObjects.TileSprite;
 
     constructor() {
         super({ key: "level" });
@@ -45,37 +55,105 @@ export class LevelScene extends Phaser.Scene {
         if (!("sprites" in this.textures.list))
             this.load.spritesheet("sprites", require("@res/img/item-sprites.png"), { frameWidth: 128, frameHeight: 128 });
 
+        if (!("controls" in this.textures.list))
+            this.load.spritesheet("controls", require("@res/img/control-sprites.png"), { frameWidth: 128, frameHeight: 128 });
+
         this.events.on("transitioncomplete", this.transitioncomplete, this);
     }
 
     public create() {
         const cam = this.cameras.main;
-        const { height } = cam;
+        const { height, width } = cam;
 
+        // load the level
         this.level = require(`@res/level/${this.levelIndex}.json`);
-        const width = this.level.size * 32;
 
-        cam.setBounds(-50, 0, width + 100, height);
+        // set up camera and physics
+        const gameWidth = this.level.size * 32, gameHeight = height - 100;
 
-        const self = this as any;
+        cam.setBounds(-50, 0, gameWidth + 100, height);
 
-        this.grid = this.add.tileSprite(width / 2, height / 2, width, height - 100, "tile-32");
+        this.grid = this.add.tileSprite(gameWidth / 2, height / 2, gameWidth, gameHeight, "tile-32");
         this.grid.flipY = true;
 
-        this.matter.world.setBounds(50, 50, width - 100, height - 100);
+        this.matter.world.setBounds(50, 50, gameWidth - 100, gameHeight);
 
-        this.wood = this.addCrate(128, 512, CrateType.Wood);
+        // add the tiles
+        for (const tile of this.level.content) {
+            this.addCrate(tile.x * 32, gameHeight - tile.y * 32, tile.type as CrateType);
+        }
 
-        this.input.on("pointermove", this.onmove, this);
 
-        const levelText = this.add.text(50, height - 40, `Level ${this.levelIndex + 1}`, {
-            fontFamily: "Clear Sans",
-            fontStyle: "bold",
-            fontSize: 24,
-            fill: "black"
-        });
-
+        // set up HUD
         this.overlays = this.add.graphics();
+
+        this.hud = this.add.container(0, 0);
+
+        this.hud.add(this.make.text({
+            x: 50,
+            y: height - 40,
+            text: `Level ${this.levelIndex + 1}`,
+            style: {
+                fontFamily: "Clear Sans",
+                fontStyle: "bold",
+                fontSize: 24,
+                fill: "black"
+            }
+        }));
+
+        this.hud.add(new Button(this, {
+            x: width - 50,
+            y: height - 40,
+            text: {
+                text: "F",
+                style: {
+                    fontFamily: "Clear Sans",
+                    fontStyle: "bold",
+                    fontSize: 24,
+                    fill: "white"
+                }
+            },
+            sprite: {
+                key: "controls",
+                frame: 1,
+                scale: 0.5
+            },
+            tooltip: {
+                text: "Force Mode",
+                style: {
+                    fontFamily: "Clear Sans",
+                    fontSize: 12,
+                    fill: "white"
+                }
+            }
+        }));
+
+        this.hud.add(new Button(this, {
+            x: width - 100,
+            y: height - 40,
+            text: {
+                text: "KE",
+                style: {
+                    fontFamily: "Clear Sans",
+                    fontStyle: "bold",
+                    fontSize: 24,
+                    fill: "white"
+                }
+            },
+            sprite: {
+                key: "controls",
+                frame: 2,
+                scale: 0.5
+            },
+            tooltip: {
+                text: "Kinetic Energy Mode",
+                style: {
+                    fontFamily: "Clear Sans",
+                    fontSize: 12,
+                    fill: "white"
+                }
+            }
+        }));
     }
 
     public update(total: number, delta: number) {
@@ -83,8 +161,21 @@ export class LevelScene extends Phaser.Scene {
         const { height } = cam;
         const width = this.level.size * 32;
 
-        cam.scrollX += this.pan.x * delta;
+        // update camera
 
+        if (this.hud) {
+            const [cx, cy, tx, ty] = [this.hud.x, this.hud.y, cam.scrollX, cam.scrollY];
+
+            this.hud.setPosition(
+                tx - (tx - cx) * delta / 10000,
+                ty - (ty - cy) * delta / 10000);
+        }
+
+        cam.scrollX += this.pan.x * delta;
+        this.pan.x = min(5, this.pan.x + this.pan.x * delta / 1000);
+
+        // update overlays if necessary
+        // TODO: the "if necessary" part
         if (this.overlays) {
             this.overlays.clear();
 
@@ -99,7 +190,7 @@ export class LevelScene extends Phaser.Scene {
     public transitioncomplete() {
     }
 
-    private onmove(pointer: Phaser.Input.Pointer) {
+    private pointermove(pointer: Phaser.Input.Pointer) {
         const cam = this.cameras.main;
         const { width, height } = cam;
 

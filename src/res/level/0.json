@@ -1,13 +1,14 @@
 {
-    "size": 32,
+    "size": 320,
     "content": [
         {
+            "x": 20,
+            "y": 0,
             "type": "aluminum",
             "control": true,
-            "position": [
-                2,
-                3
-            ]
+            "show": {
+                "mass": true
+            }
         }
     ]
 }
