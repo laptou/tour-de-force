@@ -9,13 +9,13 @@ stats.showPanel(0);
 class TourDeForceGame extends Phaser.Game {
     constructor() {
         super({
-            height: window.innerHeight * window.devicePixelRatio,
-            width: window.innerWidth * window.devicePixelRatio,
+            height: window.innerHeight,
+            width: window.innerWidth,
             type: Phaser.WEBGL,
             backgroundColor: "#FFFFFF",
             physics: { default: "matter", matter: { gravity: { y: 0.981 } }, debug: true },
             scene: [/*TitleScene, LevelSelectScene,*/ LevelScene],
-            // autoResize: true,
+            autoResize: true,
             // resolution: window.devicePixelRatio,
         });
 

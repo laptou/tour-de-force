@@ -28,9 +28,15 @@ export function square(n: number) {
 
 export type Vector = { x: number; y: number };
 
+export type Ray = { source: Vector; direction: Vector };
+
 export function vsquare(a: Vector) {
     const l = vlen(a);
     return l * l;
+}
+
+export function vdot(a: Vector, b: Vector) {
+    return a.x * b.x + a.y * b.y;
 }
 
 export function vlen(a: Vector) {

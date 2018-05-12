@@ -1,9 +1,11 @@
 import { Button } from "@control/button";
 import * as Phaser from "phaser";
 
+import { Ray } from "../util";
+
 const { sin, cos, random, PI, max, min } = Math;
 
-enum CrateType {
+enum TileType {
     Wood = "wood", Steel = "steel", Aluminum = "aluminum"
 }
 
@@ -12,18 +14,53 @@ enum Mode {
     Force
 }
 
-export class LevelScene extends Phaser.Scene {
+type TileConfig =
+    {
+        x?: number;
+        y?: number;
+        type: TileType;
+    };
 
+class Tile extends Phaser.GameObjects.Sprite {
+
+    constructor(scene: Phaser.Scene, config: TileConfig) {
+        let frame: number;
+        let mass: number;
+
+        switch (config.type) {
+            case TileType.Wood:
+                frame = 5;
+                mass = 75;
+                break;
+            case TileType.Steel:
+                frame = 6;
+                mass = 120;
+                break;
+            case TileType.Aluminum:
+                frame = 7;
+                mass = 100;
+                break;
+        }
+
+        super(scene,
+            config ? config.x || 0 : 0,
+            config ? config.y || 0 : 0,
+            "sprites");
+    }
+}
+
+export class LevelScene extends Phaser.Scene {
     private level: any;
     private levelIndex!: number;
 
     private scale = 100; // 100px = 1m
     private pan = { x: 0, y: 0 };
     private mode = Mode.View;
+    private ray?: Ray;
 
     private hud!: Phaser.GameObjects.Container;
     private overlays!: Phaser.GameObjects.Graphics;
-    private wood!: Phaser.Physics.Matter.Image;
+    private tileContainer!: Phaser.GameObjects.Container;
     private grid!: Phaser.GameObjects.TileSprite;
 
     constructor() {
@@ -58,7 +95,6 @@ export class LevelScene extends Phaser.Scene {
         if (!("controls" in this.textures.list))
             this.load.spritesheet("controls", require("@res/img/control-sprites.png"), { frameWidth: 128, frameHeight: 128 });
 
-        this.events.on("transitioncomplete", this.transitioncomplete, this);
     }
 
     public create() {
@@ -79,10 +115,11 @@ export class LevelScene extends Phaser.Scene {
         this.matter.world.setBounds(50, 50, gameWidth - 100, gameHeight);
 
         // add the tiles
-        for (const tile of this.level.content) {
-            this.addCrate(tile.x * 32, gameHeight - tile.y * 32, tile.type as CrateType);
-        }
+        this.tileContainer = this.make.container({});
 
+        for (const tile of this.level.content) {
+            this.tileContainer.add(this.addCrate(tile.x * 32, gameHeight - tile.y * 32, tile.type as TileType));
+        }
 
         // set up HUD
         this.overlays = this.add.graphics();
@@ -165,10 +202,10 @@ export class LevelScene extends Phaser.Scene {
 
         if (this.hud) {
             const [cx, cy, tx, ty] = [this.hud.x, this.hud.y, cam.scrollX, cam.scrollY];
-
-            this.hud.setPosition(
-                tx - (tx - cx) * delta / 10000,
-                ty - (ty - cy) * delta / 10000);
+            if (cx != tx || cy != ty)
+                this.hud.setPosition(
+                    tx - (tx - cx) * delta / 10000,
+                    ty - (ty - cy) * delta / 10000);
         }
 
         cam.scrollX += this.pan.x * delta;
@@ -176,7 +213,7 @@ export class LevelScene extends Phaser.Scene {
 
         // update overlays if necessary
         // TODO: the "if necessary" part
-        if (this.overlays) {
+        if (this.overlays && total == 0) {
             this.overlays.clear();
 
             this.overlays.fillStyle(0xFFFFFF);
@@ -187,10 +224,15 @@ export class LevelScene extends Phaser.Scene {
         }
     }
 
-    public transitioncomplete() {
+    private tileOnPointerUp(pointer: Phaser.Input.Pointer, x: number, y: number) {
+        console.log("up", arguments);
     }
 
-    private pointermove(pointer: Phaser.Input.Pointer) {
+    private tileOnPointerDown(pointer: Phaser.Input.Pointer, x: number, y: number, camera: Phaser.Cameras.Scene2D.Camera) {
+
+    }
+
+    private onPointerMove(pointer: Phaser.Input.Pointer) {
         const cam = this.cameras.main;
         const { width, height } = cam;
 
@@ -202,23 +244,23 @@ export class LevelScene extends Phaser.Scene {
             this.pan.x = 0;
     }
 
-    private addCrate(x: number, y: number, crateType: CrateType) {
+    private addCrate(x: number, y: number, crateType: TileType) {
         let body: Matter.Body;
         let sprite: Phaser.GameObjects.Image;
         let mass: number, inertia: number;
 
         switch (crateType) {
-            case CrateType.Wood:
+            case TileType.Wood:
                 sprite = this.add.image(x, y, "sprites", 5);
                 mass = 75;
                 inertia = 100;
                 break;
-            case CrateType.Steel:
+            case TileType.Steel:
                 sprite = this.add.image(x, y, "sprites", 6);
                 mass = 120;
                 inertia = 200;
                 break;
-            case CrateType.Aluminum:
+            case TileType.Aluminum:
                 sprite = this.add.image(x, y, "sprites", 7);
                 mass = 75;
                 inertia = 120;
@@ -228,7 +270,10 @@ export class LevelScene extends Phaser.Scene {
         }
 
         const matterObj = this.matter.add.gameObject(sprite, { shape: { chamfer: { radius: 16 } }, mass });
-
+        matterObj.type = "tile";
+        matterObj.setInteractive();
+        matterObj.on("pointerup", this.tileOnPointerUp, this);
+        matterObj.on("pointerdown", this.tileOnPointerDown, this);
         return matterObj as Phaser.Physics.Matter.Image;
     }
 

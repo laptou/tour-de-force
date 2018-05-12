@@ -19,7 +19,8 @@
             "label": "Web server",
             "group": "none",
             "isBackground": true,
-            "promptOnClose": false
+            "promptOnClose": false,
+            "problemMatcher": []
         },
         {
             "type": "shell",
