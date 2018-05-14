@@ -1,28 +1,51 @@
 import { Button } from "@control/button";
 import * as Phaser from "phaser";
 
-import { Ray } from "../util";
+import { Ray, vector } from "../util";
 
-const { sin, cos, random, PI, max, min } = Math;
+const { sin, cos, random, PI, max, min, abs } = Math;
 
 enum TileType {
     Wood = "wood", Steel = "steel", Aluminum = "aluminum"
 }
 
-enum Mode {
+enum GameMode {
     View,
-    Force
+    Force,
+    KineticEnergy
 }
 
-type TileConfig =
-    {
-        x?: number;
-        y?: number;
-        type: TileType;
-    };
+enum ControlAlignment {
+    Left = 1,
+    Right = 2,
+    Center = 4,
+    Top = 8,
+    Bottom = 16
+}
+
+interface TileConfig {
+    x?: number;
+    y?: number;
+    type: TileType;
+}
+
+interface HudButtonConfig {
+    text: string;
+    tooltip: string;
+    sprite: string;
+    frame: number;
+
+    align?: ControlAlignment;
+    offset?: { x: number, y: number };
+    handler?: Function;
+}
+
+interface ModeHudButtonConfig extends HudButtonConfig {
+    grey?: boolean;
+    mode: GameMode;
+}
 
 class Tile extends Phaser.GameObjects.Sprite {
-
     constructor(scene: Phaser.Scene, config: TileConfig) {
         let frame: number;
         let mass: number;
@@ -40,23 +63,33 @@ class Tile extends Phaser.GameObjects.Sprite {
                 frame = 7;
                 mass = 100;
                 break;
+            default:
+                throw new Error("Invalid crate type.");
         }
 
         super(scene,
             config ? config.x || 0 : 0,
             config ? config.y || 0 : 0,
-            "sprites");
+            "sprites", frame);
+
+        const matterObj = scene.matter.add.gameObject(this, { shape: { chamfer: { radius: 16 } }, mass });
+        matterObj.type = "tile";
+        matterObj.setInteractive();
     }
 }
 
 export class LevelScene extends Phaser.Scene {
+
     private level: any;
     private levelIndex!: number;
 
     private scale = 100; // 100px = 1m
     private pan = { x: 0, y: 0 };
-    private mode = Mode.View;
+    private mode = GameMode.View;
     private ray?: Ray;
+    private dirty = false;
+
+    private target?: Tile;
 
     private hud!: Phaser.GameObjects.Container;
     private overlays!: Phaser.GameObjects.Graphics;
@@ -75,7 +108,7 @@ export class LevelScene extends Phaser.Scene {
 
     public preload() {
         if (!("tile-32" in this.textures.list)) {
-            const graphics = this.make.graphics();
+            const graphics = this.make.graphics({}, false);
 
             graphics
                 .fillStyle(0xFFFFFF)
@@ -102,7 +135,7 @@ export class LevelScene extends Phaser.Scene {
         const { height, width } = cam;
 
         // load the level
-        this.level = require(`@res/level/${this.levelIndex}.json`);
+        this.level = require(`@res/level/${this.levelIndex || 0}.json`);
 
         // set up camera and physics
         const gameWidth = this.level.size * 32, gameHeight = height - 100;
@@ -118,7 +151,7 @@ export class LevelScene extends Phaser.Scene {
         this.tileContainer = this.make.container({});
 
         for (const tile of this.level.content) {
-            this.tileContainer.add(this.addCrate(tile.x * 32, gameHeight - tile.y * 32, tile.type as TileType));
+            this.tileContainer.add(this.addTile(tile.x * 32, gameHeight - tile.y * 32, tile.type as TileType));
         }
 
         // set up HUD
@@ -138,59 +171,28 @@ export class LevelScene extends Phaser.Scene {
             }
         }));
 
-        this.hud.add(new Button(this, {
-            x: width - 50,
-            y: height - 40,
-            text: {
-                text: "F",
-                style: {
-                    fontFamily: "Clear Sans",
-                    fontStyle: "bold",
-                    fontSize: 24,
-                    fill: "white"
-                }
-            },
-            sprite: {
-                key: "controls",
-                frame: 1,
-                scale: 0.5
-            },
-            tooltip: {
-                text: "Force Mode",
-                style: {
-                    fontFamily: "Clear Sans",
-                    fontSize: 12,
-                    fill: "white"
-                }
-            }
+        this.hud.add(this.makeModeHudButton({
+            sprite: "controls",
+            frame: 1,
+            offset: { x: 100, y: 40 },
+            text: "F",
+            tooltip: "Force Mode",
+            mode: GameMode.Force
         }));
 
-        this.hud.add(new Button(this, {
-            x: width - 100,
-            y: height - 40,
-            text: {
-                text: "KE",
-                style: {
-                    fontFamily: "Clear Sans",
-                    fontStyle: "bold",
-                    fontSize: 24,
-                    fill: "white"
-                }
-            },
-            sprite: {
-                key: "controls",
-                frame: 2,
-                scale: 0.5
-            },
-            tooltip: {
-                text: "Kinetic Energy Mode",
-                style: {
-                    fontFamily: "Clear Sans",
-                    fontSize: 12,
-                    fill: "white"
-                }
-            }
+        this.hud.add(this.makeModeHudButton({
+            sprite: "controls",
+            frame: 2,
+            offset: { x: 150, y: 40 },
+            text: "KE",
+            tooltip: "Kinetic Energy Mode",
+            mode: GameMode.KineticEnergy
         }));
+
+        this.input.on("pointermove", this.onPointerMove, this);
+        this.input.on("pointerup", this.onPointerUp, this);
+
+        this.dirty = true;
     }
 
     public update(total: number, delta: number) {
@@ -211,9 +213,10 @@ export class LevelScene extends Phaser.Scene {
         cam.scrollX += this.pan.x * delta;
         this.pan.x = min(5, this.pan.x + this.pan.x * delta / 1000);
 
+        this.overlays.setPosition(cam.scrollX, cam.scrollY);
+
         // update overlays if necessary
-        // TODO: the "if necessary" part
-        if (this.overlays && total == 0) {
+        if (this.overlays && this.dirty) {
             this.overlays.clear();
 
             this.overlays.fillStyle(0xFFFFFF);
@@ -221,18 +224,75 @@ export class LevelScene extends Phaser.Scene {
             this.overlays.fillRect(0, height - 50, width, 50);
             this.overlays.lineStyle(4, 0);
             this.overlays.strokeRect(0, 50, width, height - 100);
+
+            if (this.ray) {
+                let color;
+                let unit;
+
+                switch (this.mode) {
+                    case GameMode.Force:
+                        color = 0x800000;
+                        unit = `${this.ray.length / 10} N`;
+                        break;
+                    default:
+                        color = 0;
+                        break;
+                }
+
+                this.overlays.lineStyle(4, color);
+                this.overlays.lineBetween(this.ray.x1, this.ray.y1, this.ray.x2, this.ray.y2);
+
+                const point = this.ray.plus(10).end;
+                const dir = this.ray.unit.times(10).direction;
+                const p1 = vector.add(this.ray.end, { x: dir.y, y: -dir.x });
+                const p2 = vector.add(this.ray.end, { x: -dir.y, y: dir.x });
+
+                this.overlays.fillStyle(color, 1);
+                this.overlays.fillTriangle(
+                    point.x, point.y,
+                    p2.x, p2.y,
+                    p1.x, p1.y,
+                );
+
+                if (unit) {
+
+                }
+            }
+            this.dirty = false;
         }
     }
 
-    private tileOnPointerUp(pointer: Phaser.Input.Pointer, x: number, y: number) {
-        console.log("up", arguments);
+    public setMode(mode: GameMode) {
+        this.mode = mode;
+        this.events.emit("update:mode");
     }
 
-    private tileOnPointerDown(pointer: Phaser.Input.Pointer, x: number, y: number, camera: Phaser.Cameras.Scene2D.Camera) {
+    private onPointerUp(pointer: Phaser.Input.Pointer, x: number, y: number) {
+        if (this.ray) {
+            if (this.target) {
+                const body = this.target as any as Phaser.Physics.Matter.Components.Force;
+                const s = this.ray.source;
+                const d = this.ray.times(0.1).direction;
+
+                body.applyForceFrom(
+                    new Phaser.Math.Vector2(s.x, s.y),
+                    new Phaser.Math.Vector2(d.x, d.y)
+                );
+            }
+
+            this.ray = undefined;
+            this.dirty = true;
+        }
 
     }
 
     private onPointerMove(pointer: Phaser.Input.Pointer) {
+        if (this.ray) {
+            this.ray.direction = vector.sub(pointer.position, this.ray.source);
+            this.dirty = true;
+            return;
+        }
+
         const cam = this.cameras.main;
         const { width, height } = cam;
 
@@ -244,37 +304,101 @@ export class LevelScene extends Phaser.Scene {
             this.pan.x = 0;
     }
 
-    private addCrate(x: number, y: number, crateType: TileType) {
-        let body: Matter.Body;
-        let sprite: Phaser.GameObjects.Image;
-        let mass: number, inertia: number;
+    private addTile(x: number, y: number, crateType: TileType): Tile {
+        const tile = new Tile(this, { x, y, type: crateType });
 
-        switch (crateType) {
-            case TileType.Wood:
-                sprite = this.add.image(x, y, "sprites", 5);
-                mass = 75;
-                inertia = 100;
-                break;
-            case TileType.Steel:
-                sprite = this.add.image(x, y, "sprites", 6);
-                mass = 120;
-                inertia = 200;
-                break;
-            case TileType.Aluminum:
-                sprite = this.add.image(x, y, "sprites", 7);
-                mass = 75;
-                inertia = 120;
-                break;
-            default:
-                throw new Error("Invalid crate type.");
+        tile.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+            switch (this.mode) {
+                case GameMode.Force:
+                    this.target = tile;
+                    this.ray = new Ray(pointer, { x: 0, y: 0 });
+                    this.dirty = true;
+                    break;
+            }
+        });
+
+        return tile;
+    }
+
+    private makeModeHudButton(config: ModeHudButtonConfig) {
+        const c = {
+            align: ControlAlignment.Right | ControlAlignment.Bottom,
+            grey: true,
+            ...config
+        };
+
+        const btn = this.makeHudButton(c);
+
+        if (c.grey) {
+            btn.sprite.setPipeline("greyscale");
+
+            btn.on("pointerover", () => {
+                btn.sprite.resetPipeline();
+            });
+
+            btn.on("pointerdown", () => {
+                this.setMode(c.mode);
+            });
+
+            btn.on("pointerout", () => {
+                if (c.mode !== this.mode)
+                    btn.sprite.setPipeline("greyscale");
+            });
+
+            this.events.on("update:mode", () => {
+                if (c.mode !== this.mode) btn.sprite.setPipeline("greyscale");
+                else btn.sprite.resetPipeline();
+            });
         }
 
-        const matterObj = this.matter.add.gameObject(sprite, { shape: { chamfer: { radius: 16 } }, mass });
-        matterObj.type = "tile";
-        matterObj.setInteractive();
-        matterObj.on("pointerup", this.tileOnPointerUp, this);
-        matterObj.on("pointerdown", this.tileOnPointerDown, this);
-        return matterObj as Phaser.Physics.Matter.Image;
+        return btn;
+    }
+
+    private makeHudButton(config: HudButtonConfig) {
+        const { height, width } = this.cameras.main;
+
+        const c = {
+            align: ControlAlignment.Left,
+            ...config
+        };
+
+        let offset = c.offset || { x: 0, y: 0 };
+
+        if ((c.align & ControlAlignment.Right) === ControlAlignment.Right)
+            offset = { x: width - offset.x, y: offset.y };
+
+        if ((c.align & ControlAlignment.Bottom) === ControlAlignment.Bottom)
+            offset = { x: offset.x, y: height - offset.y };
+
+        const btn = new Button(this, {
+            ...offset,
+            text: {
+                text: c.text,
+                style: {
+                    fontFamily: "Clear Sans",
+                    fontStyle: "bold",
+                    fontSize: 24,
+                    fill: "white"
+                }
+            },
+            sprite: {
+                key: c.sprite,
+                frame: c.frame,
+                scale: 0.5
+            },
+            tooltip: {
+                text: c.tooltip,
+                style: {
+                    fontFamily: "Clear Sans",
+                    fontSize: 12,
+                    fill: "white"
+                }
+            }
+        });
+
+        if (c.handler) btn.on("pointerdown", c.handler);
+
+        return btn;
     }
 
     private outro(progress: number) {

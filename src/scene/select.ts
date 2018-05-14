@@ -34,7 +34,7 @@ export class LevelSelectScene extends Phaser.Scene {
                 .setStroke("#FFFFFF", 10)
                 .setShadow(0, 0, "#AAAAAA", 6, true, false);
 
-        const mask = this.make.graphics();
+        const mask = this.make.graphics({}, false);
         mask.fillStyle(0xFFFFFF);
         mask.fillCircle(50, 50, 300);
         this.children.remove(mask);

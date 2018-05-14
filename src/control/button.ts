@@ -9,12 +9,12 @@ export class Button extends Phaser.GameObjects.Container {
     constructor(scene: Phaser.Scene, config: any) {
         super(scene, config.x, config.y);
 
-        this.sprite = scene.make.sprite(config.sprite);
+        this.sprite = scene.make.sprite(config.sprite, false);
         if (config.sprite.tint) this.sprite.tint = config.sprite.tint;
         this.add(this.sprite);
 
         if ("text" in config) {
-            this.text = scene.make.text({ origin: 0.5, ...config.text });
+            this.text = scene.make.text({ origin: 0.5, ...config.text }, false);
             this.add(this.text);
         }
 

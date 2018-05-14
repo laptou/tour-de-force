@@ -16,7 +16,7 @@ export class TitleScene extends Phaser.Scene {
     public preload() {
         const game = this.sys.game;
 
-        const graphics = this.make.graphics();
+        const graphics = this.make.graphics({}, false);
 
         graphics
             .fillStyle(0xFFFFFF)
