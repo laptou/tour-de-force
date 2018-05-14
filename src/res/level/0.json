@@ -5,7 +5,7 @@
             "x": 20,
             "y": 0,
             "type": "aluminum",
-            "control": true,
+            "track": true,
             "show": {
                 "mass": true
             }

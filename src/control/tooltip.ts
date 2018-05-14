@@ -1,6 +1,7 @@
 export class Tooltip extends Phaser.GameObjects.Container {
     private text: Phaser.GameObjects.Text;
     private graphics: Phaser.GameObjects.Graphics;
+    private tween?: Phaser.Tweens.Tween;
 
     constructor(scene: Phaser.Scene, config: any) {
         super(scene, config.x, config.y);
@@ -41,7 +42,10 @@ export class Tooltip extends Phaser.GameObjects.Container {
     }
 
     private pointerover(pointer: Phaser.Input.Pointer) {
-        this.scene.tweens.add({
+        if (this.tween)
+            this.tween.stop();
+
+        this.tween = this.scene.tweens.add({
             targets: this,
             alpha: 1,
             duration: 100,
@@ -51,6 +55,9 @@ export class Tooltip extends Phaser.GameObjects.Container {
     }
 
     private pointerout(pointer: Phaser.Input.Pointer) {
+        if (this.tween)
+            this.tween.stop();
+
         this.scene.tweens.add({
             targets: this,
             alpha: 0,

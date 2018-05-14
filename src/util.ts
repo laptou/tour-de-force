@@ -26,6 +26,10 @@ export function square(n: number) {
     return n * n;
 }
 
+export function clamp(min: number, x: number, max: number) {
+    return Math.min(Math.max(x, min), max);
+}
+
 export type VectorLike = { x: number; y: number };
 
 // tslint:disable:no-use-before-declare
