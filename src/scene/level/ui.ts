@@ -1,11 +1,10 @@
-
-enum GameMode {
+export enum GameMode {
     View,
     Force,
     KineticEnergy
 }
 
-enum ControlAlignment {
+export enum ControlAlignment {
     Left = 1,
     Right = 2,
     Center = 4,
@@ -13,7 +12,7 @@ enum ControlAlignment {
     Bottom = 16
 }
 
-interface HudButtonConfig {
+export interface HudButtonConfig {
     text: string;
     tooltip: string;
     sprite: string;
@@ -24,7 +23,7 @@ interface HudButtonConfig {
     handler?: Function;
 }
 
-interface ModeHudButtonConfig extends HudButtonConfig {
+export interface ModeHudButtonConfig extends HudButtonConfig {
     grey?: boolean;
     mode: GameMode;
 }

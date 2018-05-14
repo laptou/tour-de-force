@@ -10,7 +10,8 @@
             "name": "Chrome",
             "url": "http://localhost:8080",
             "webRoot": "${workspaceFolder}",
-            "showAsyncStacks": true
+            "showAsyncStacks": true,
+            "preLaunchTask": "Web server"
         }
     ]
 }

@@ -65,12 +65,13 @@ module.exports = {
         ]
     },
     resolve: {
-        extensions: [".ts", ".js", ".glsl"],
+        extensions: [".ts", ".js", ".glsl", ".json"],
         alias: {
             "@res": path.join(__dirname, "src/res"),
             "@shader": path.join(__dirname, "src/shader"),
             "@control": path.join(__dirname, "src/control"),
-            "@screen": path.join(__dirname, "src/screen"),
+            "@scene": path.join(__dirname, "src/scene"),
+            "@util": path.join(__dirname, "src/util.ts"),
         }
     }
 };

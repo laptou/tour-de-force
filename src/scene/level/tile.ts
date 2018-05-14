@@ -1,15 +1,14 @@
-
-enum TileType {
+export enum TileType {
     Wood = "wood", Steel = "steel", Aluminum = "aluminum"
 }
 
-interface TileConfig {
+export interface TileConfig {
     x: number;
     y: number;
     type: TileType;
 }
 
-class Tile extends Phaser.GameObjects.Sprite {
+export class Tile extends Phaser.GameObjects.Sprite {
 
     constructor(scene: Phaser.Scene, config: TileConfig) {
         let frame: number;

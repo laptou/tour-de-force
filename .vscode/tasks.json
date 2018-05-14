@@ -20,7 +20,7 @@
             "group": "none",
             "isBackground": true,
             "promptOnClose": false,
-            "problemMatcher": []
+            "problemMatcher": [],
         },
         {
             "type": "shell",

@@ -12,8 +12,11 @@
         "allowSyntheticDefaultImports": true,
         "baseUrl": ".",
         "paths": {
-            "@screen/*": [
-                "src/screen/*"
+            "@scene/*": [
+                "src/scene/*"
+            ],
+            "@util": [
+                "src/util.ts"
             ],
             "@control/*": [
                 "src/control/*"

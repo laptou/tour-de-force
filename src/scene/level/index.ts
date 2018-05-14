@@ -1,9 +1,9 @@
 import { Button } from "@control/button";
+import { clamp, Ray, vector } from "@util";
 import * as Phaser from "phaser";
 
-import { clamp, Ray, vector } from "../util";
-import { Tile } from "./level/tile";
-import { GameMode } from "./level/ui";
+import { Tile, TileConfig } from "./tile";
+import { ControlAlignment, GameMode, HudButtonConfig, ModeHudButtonConfig } from "./ui";
 
 const { sin, cos, random, PI, max, min, abs } = Math;
 
@@ -100,17 +100,29 @@ export class LevelScene extends Phaser.Scene {
         if (this.overlays && this.dirty) {
             this.overlays.clear();
 
-            if (this.ray) {
+            if (this.target && this.ray) {
                 let color;
                 let unit;
+                const body = this.target.body as Matter.Body;
 
                 switch (this.mode) {
                     case GameMode.Force:
                         color = 0x800000;
-                        unit =
-                            `F (${(this.ray.length / 10).toPrecision(3)} N) ×` +
+
+                        const force = this.ray.length / 10;
+
+                        const momentum =
+                            `F (${force.toPrecision(3)} N) × ` +
                             `Δt (1/60 s) = ` +
-                            `Δρ(${(this.ray.length / 600).toPrecision(3)} kg ⋅ m / s)`;
+                            `Δρ (${(force / 60).toPrecision(3)} kg ⋅ m / s)`;
+
+                        const acceleration =
+                            `F (${force.toPrecision(3)} N) / ` +
+                            `m (${body.mass} kg) = ` +
+                            `a (${force / body.mass} m/s²)`
+
+                        unit = [momentum, acceleration].join("\n");
+
                         break;
                     default:
                         color = 0;
@@ -149,7 +161,7 @@ export class LevelScene extends Phaser.Scene {
         const { height, width } = cam;
 
         // load the level
-        this.level = require(`@res/level/${this.levelIndex || 0}.json`);
+        this.level = require(`@res/level/${0}.json`);
 
         // set up camera and physics
         const gameWidth = this.level.size * 32, gameHeight = height - 100;
@@ -272,6 +284,8 @@ export class LevelScene extends Phaser.Scene {
         return tile;
     }
 
+    // #region factory functions
+
     private makeModeHudButton(config: ModeHudButtonConfig) {
         const c = {
             align: ControlAlignment.Right | ControlAlignment.Bottom,
@@ -352,6 +366,8 @@ export class LevelScene extends Phaser.Scene {
 
         return btn;
     }
+
+    // #endregion
 
     private outro(progress: number) {
     }
