@@ -1,5 +1,5 @@
 import { Button } from "@control/button";
-import { clamp, Ray, vector } from "@util";
+import { clamp, fixed, precision, Ray, units, vector } from "@util";
 import * as Phaser from "phaser";
 
 import { Tile, TileConfig } from "./tile";
@@ -21,7 +21,8 @@ export class LevelScene extends Phaser.Scene {
     private target?: Tile;
     private track?: Tile;
 
-    private info!: Phaser.GameObjects.Text;
+    private actionInfo!: Phaser.GameObjects.Text;
+    private targetInfo!: Phaser.GameObjects.Text;
     private hud!: Phaser.GameObjects.Container;
     private overlays!: Phaser.GameObjects.Graphics;
     private tileContainer!: Phaser.GameObjects.Container;
@@ -96,9 +97,12 @@ export class LevelScene extends Phaser.Scene {
         this.hud.setPosition(clampedX, cam.scrollY);
         this.overlays.setPosition(clampedX, cam.scrollY);
 
+
         // update overlays if necessary
         if (this.overlays && this.dirty) {
             this.overlays.clear();
+
+            this.actionInfo.text = "";
 
             if (this.target && this.ray) {
                 let color;
@@ -109,19 +113,22 @@ export class LevelScene extends Phaser.Scene {
                     case GameMode.Force:
                         color = 0x800000;
 
-                        const force = this.ray.length / 10;
+                        // velocity is in pixels per timestep (1/60s)
+                        // so all other units need to be divided accordingly
 
-                        const momentum =
-                            `F (${force.toPrecision(3)} N) × ` +
-                            `Δt (1/60 s) = ` +
-                            `Δρ (${(force / 60).toPrecision(3)} kg ⋅ m / s)`;
+                        const time = new units.Measurement(1 / 60, units.Time.Second);
+                        const mass = new units.Measurement(body.mass, units.Mass.Kilogram);
+                        const force = new units.Measurement(this.ray.length / 10, units.Force.Newton);
 
-                        const acceleration =
-                            `F (${force.toPrecision(3)} N) / ` +
-                            `m (${body.mass} kg) = ` +
-                            `a (${force / body.mass} m/s²)`
+                        const impulse = force.times(time);
+                        const accel = force.over(mass).times(100); // 100px = 1m
+                        const velo = accel.times(time);
 
-                        unit = [momentum, acceleration].join("\n");
+                        const momentum = precision(3) `F (${force}) × Δt (1/60 s) = Δρ (${impulse})`;
+                        const acceleration = precision(3) `F (${force}) / m (${mass}) = a (${accel})`;
+                        const velocity = precision(3) `a (${accel}) × Δt (1/60 s) = Δv (${velo})`;
+
+                        unit = [acceleration, velocity].join("\n");
 
                         break;
                     default:
@@ -144,10 +151,43 @@ export class LevelScene extends Phaser.Scene {
                     p1.x, p1.y,
                 );
 
-                this.info.text = unit || "";
-                this.info.updateText();
+                this.actionInfo.text = unit || "";
             }
+
+            this.actionInfo.updateText();
+
             this.dirty = false;
+        }
+
+        if (this.target) {
+            const body = this.target.body as Matter.Body;
+
+            this.targetInfo.setBackgroundColor("#FFFFFF");
+
+            const m = new units.Measurement(body.mass, units.Mass.Kilogram);
+
+            // 100px = 1m
+            const x = new units.VectorMeasurement(
+                vector.div(this.target, 100),
+                new units.Unit([units.Distance.Meter]));
+
+            // velocity is added every timestep according to 
+            // http://brm.io/matter-js/docs/files/src_body_Body.js.html
+            // with no division, meaning velocity units are actually
+            // pixels per 1/60th of a second
+            // so to get px/s, multiply by 60
+            // then to get m/s, divide by 100
+            const v = new units.VectorMeasurement(
+                vector.mult(body.velocity, 0.6),
+                new units.Unit([units.Distance.Meter], [units.Time.Second]));
+
+            this.targetInfo.setText([
+                fixed(1) `m: ${m}`,
+                fixed(1) `x: ${x}`,
+                fixed(1) `v: ${v}`,
+                fixed(1) `θ: ${this.target.angle} °`,
+                fixed(1) `ω: ${body.angularVelocity} °/s`,
+            ]);
         }
     }
 
@@ -172,6 +212,11 @@ export class LevelScene extends Phaser.Scene {
         this.grid.flipY = true;
 
         this.matter.world.setBounds(50, 50, gameWidth - 100, gameHeight);
+        const walls = this.matter.world.walls as { left: Matter.Body; right: Matter.Body; top: Matter.Body; bottom: Matter.Body };
+        walls.top.friction = 0;
+        walls.bottom.friction = 0;
+        walls.left.friction = 0;
+        walls.right.friction = 0;
 
         // add the tiles
         this.tileContainer = this.make.container({});
@@ -184,6 +229,8 @@ export class LevelScene extends Phaser.Scene {
 
             this.tileContainer.add(tile);
         }
+
+
     }
 
     private createHUD() {
@@ -198,7 +245,7 @@ export class LevelScene extends Phaser.Scene {
         this.hud.add(this.make.text({
             x: 50,
             y: height - 40,
-            text: `Level ${this.levelIndex + 1}`,
+            text: `Level ${(this.levelIndex || 0) + 1}`,
             style: {
                 fontFamily: "Clear Sans",
                 fontStyle: "bold",
@@ -208,7 +255,7 @@ export class LevelScene extends Phaser.Scene {
         }));
 
         // information
-        this.hud.add(this.info = this.make.text({
+        this.hud.add(this.actionInfo = this.make.text({
             x: width / 2,
             y: height - 20,
             text: "",
@@ -219,7 +266,20 @@ export class LevelScene extends Phaser.Scene {
                 fontSize: 14,
                 fill: "black"
             }
-        }))
+        }));
+
+        this.hud.add(this.targetInfo = this.make.text({
+            x: width - 50,
+            y: 100,
+            text: "",
+            origin: { x: 1, y: 0 },
+            style: {
+                fontFamily: "Clear Sans",
+                fontStyle: "bold",
+                fontSize: 14,
+                fill: "black"
+            }
+        }));
 
         // mode buttons
         this.hud.add(this.makeModeHudButton({

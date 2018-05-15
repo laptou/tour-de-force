@@ -38,7 +38,8 @@ export class Tile extends Phaser.GameObjects.Sprite {
 
         const matterObj = scene.matter.add.gameObject(this, {
             chamfer: { radius: 16 },
-            mass
+            mass,
+            frictionAir: 0
         });
         matterObj.type = "tile";
         matterObj.setInteractive();

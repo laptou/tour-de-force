@@ -37,7 +37,6 @@
         "no-shadowed-variable": true,
         "no-string-throw": true,
         "no-switch-case-fall-through": true,
-        "no-use-before-declare": true,
         "prefer-object-spread": true,
         "prefer-conditional-expression": true,
         "restrict-plus-operands": true,
