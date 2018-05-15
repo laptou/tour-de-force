@@ -480,16 +480,10 @@ export namespace units {
             const num = [...unit.numerator];
             const den = [...unit.denominator];
 
-            let targetExpanded: Unit;
 
-            if (target instanceof Unit) targetExpanded = target.expanded();
-            else {
-                if (denominator)
-                    targetExpanded = new Unit([target], [denominator]).expanded();
-                else
-                    targetExpanded = new Unit([target]).expanded();
-            }
+            if (!(target instanceof Unit)) target = new Unit(target, denominator);
 
+            const targetExpanded = target.expanded();
             const targetNum = [...targetExpanded.numerator];
             const targetDen = [...targetExpanded.denominator];
 
