@@ -1,6 +1,6 @@
 import { Tween } from "@tweenjs/tween.js";
 
-const { sqrt, pow } = Math;
+const { sqrt, pow, PI } = Math;
 
 export function abs(x: number): number;
 export function abs(x: units.Measurement): units.Measurement;
@@ -169,14 +169,24 @@ export class Ray {
     }
 }
 
+function reverseEnum(type: any) {
+    for (const member in type) {
+        if (type.hasOwnProperty(member)) {
+            type[type[member]] = member;
+        }
+    }
+}
+
 export namespace units {
+
     export enum Distance {
         Pixel = "px",
         Meter = "m"
     }
 
     export enum Time {
-        Second = "s"
+        Second = "s",
+        Step = "step"
     }
 
     export enum Force {
@@ -187,15 +197,28 @@ export namespace units {
         Kilogram = "kg"
     }
 
-    type BaseUnit = Distance | Time | Force | Mass;
+    export enum Angle {
+        Degree = "°",
+        Radian = "rad"
+    }
+
+    reverseEnum(Distance);
+    reverseEnum(Time);
+    reverseEnum(Force);
+    reverseEnum(Mass);
+    reverseEnum(Angle);
+
+    export type BaseUnit = Distance | Time | Force | Mass | Angle;
 
     export class Unit {
+
+
         public numerator: BaseUnit[];
         public denominator: BaseUnit[];
 
-        constructor(num: BaseUnit[], den?: BaseUnit[]) {
-            this.numerator = num.sort();
-            this.denominator = den ? den.sort() : [];
+        constructor(num: BaseUnit[] | BaseUnit, den?: BaseUnit[] | BaseUnit) {
+            this.numerator = typeof num === "string" ? [num] : num.sort();
+            this.denominator = typeof den === "string" ? [den] : (den ? den.sort() : []);
         }
 
         public expanded() {
@@ -312,6 +335,89 @@ export namespace units {
                 [...u1.denominator, ...u2.numerator])
                 .simplified();
         }
+
+    }
+
+    export const pixelsPerStep = new Unit(Distance.Pixel, Time.Step);
+    export const metersPerSecond = new Unit(Distance.Meter, Time.Second);
+
+    export namespace convert {
+        export function angle(value: number, from: Angle, to: Angle) {
+            if (from === to) return value;
+
+            // base unit is radians
+
+            switch (from) {
+                case Angle.Degree:
+                    value = value / 180 * PI;
+                    break;
+            }
+
+            switch (to) {
+                case Angle.Degree:
+                    return value * 180 / PI;
+                case Angle.Radian:
+                    return value;
+            }
+        }
+
+        export function distance(value: number, from: Distance, to: Distance) {
+            if (from === to) return value;
+
+            // base unit is meters
+
+            switch (from) {
+                case Distance.Pixel:
+                    value = value / 100;
+                    break;
+            }
+
+            switch (to) {
+                case Distance.Pixel:
+                    return value * 100;
+                case Distance.Meter:
+                    return value;
+            }
+        }
+
+        export function time(value: number, from: Time, to: Time) {
+            if (from === to) return value;
+
+            // base unit is seconds
+
+            switch (from) {
+                case Time.Step:
+                    value = value / 60;
+                    break;
+            }
+
+            switch (to) {
+                case Time.Step:
+                    return value * 60;
+                case Time.Second:
+                    return value;
+            }
+        }
+
+        export function auto<T extends BaseUnit>(value: number, from: T, to: T) {
+            if (!possible(from, to)) throw new Error(`Incompatible units: ${from}, ${to}`);
+
+            if (from === to) return value;
+
+            if (from in Angle) return angle(value, from as Angle, to as Angle);
+            if (from in Distance) return distance(value, from as Distance, to as Distance);
+            if (from in Time) return time(value, from as Time, to as Time);
+
+            return value;
+        }
+
+        export function possible<T extends BaseUnit>(from: T, to: T) {
+            if (from === to) return true;
+            if (from in Angle && to in Angle) return true;
+            if (from in Distance && to in Distance) return true;
+            if (from in Time && to in Time) return true;
+            return false;
+        }
     }
 
     export class Measurement implements Number {
@@ -365,20 +471,60 @@ export namespace units {
 
             return new Measurement(this.value / m.value, Unit.div(this.unit, m.unit));
         }
+
+        public to(target: Unit): Measurement;
+        public to(numerator: BaseUnit, denominator?: BaseUnit): Measurement;
+        public to(target: Unit | BaseUnit, denominator?: BaseUnit) {
+            let val = this.value;
+            const unit = this.unit.expanded();
+            const num = [...unit.numerator];
+            const den = [...unit.denominator];
+
+            let targetExpanded: Unit;
+
+            if (target instanceof Unit) targetExpanded = target.expanded();
+            else {
+                if (denominator)
+                    targetExpanded = new Unit([target], [denominator]).expanded();
+                else
+                    targetExpanded = new Unit([target]).expanded();
+            }
+
+            const targetNum = [...targetExpanded.numerator];
+            const targetDen = [...targetExpanded.denominator];
+
+            for (let ni = 0; ni < num.length; ni++) {
+                const [numUnit] = num.splice(ni, 1);
+                const i = targetNum.findIndex(n => convert.possible(n, numUnit));
+                const [targetNumUnit] = targetNum.splice(i, 1);
+
+                val = convert.auto(val, numUnit, targetNumUnit);
+            }
+
+            for (let di = 0; di < den.length; di++) {
+                const [denUnit] = den.splice(di, 1);
+                const i = targetDen.findIndex(d => convert.possible(d, denUnit));
+                const [targetDenUnit] = targetDen.splice(i, 1);
+
+                val = 1 / convert.auto(1 / val, denUnit, targetDenUnit);
+            }
+
+            return new Measurement(val, target);
+        }
     }
 
     export class VectorMeasurement extends Vector {
         public unit: Unit;
 
-        public constructor(x: VectorLike, u: Unit);
-        public constructor(x: number, y: number, u: Unit);
-        public constructor(x: number | VectorLike, y: number | Unit, u?: Unit) {
+        public constructor(x: VectorLike, u: Unit | BaseUnit);
+        public constructor(x: number, y: number, u: Unit | BaseUnit);
+        public constructor(x: number | VectorLike, y: number | Unit | BaseUnit, u?: Unit | BaseUnit) {
             if (u) {
                 super(x as number, y as number);
-                this.unit = u;
+                this.unit = u instanceof Unit ? u : new Unit(u);
             } else {
                 super(x as Vector);
-                this.unit = y as Unit;
+                this.unit = y instanceof Unit ? y : new Unit(y as BaseUnit);
             }
         }
 
@@ -396,6 +542,25 @@ export namespace units {
 
         public toExponential(p?: number) {
             return `<${this.x.toExponential(p)}, ${this.y.toExponential(p)}> ${this.unit}`;
+        }
+
+        public to(target: Unit): VectorMeasurement;
+        public to(numerator: BaseUnit, denominator?: BaseUnit): VectorMeasurement;
+        public to(target: Unit | BaseUnit, denominator?: BaseUnit) {
+            let unit: Unit;
+
+            if (target instanceof Unit) unit = target;
+            else {
+                if (denominator)
+                    unit = new Unit([target], [denominator]);
+                else
+                    unit = new Unit([target]);
+            }
+
+            const xm = new Measurement(this.x, this.unit).to(unit);
+            const ym = new Measurement(this.x, this.unit).to(unit);
+
+            return new VectorMeasurement(xm.value, ym.value, unit);
         }
     }
 }

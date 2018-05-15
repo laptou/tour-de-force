@@ -118,13 +118,13 @@ export class LevelScene extends Phaser.Scene {
 
                         const time = new units.Measurement(1 / 60, units.Time.Second);
                         const mass = new units.Measurement(body.mass, units.Mass.Kilogram);
-                        const force = new units.Measurement(this.ray.length / 10, units.Force.Newton);
+                        const force = new units.Measurement(this.ray.length, units.Force.Newton).times(100);
 
-                        const impulse = force.times(time);
-                        const accel = force.over(mass).times(100); // 100px = 1m
+                        // const impulse = force.times(time);
+                        const accel = force.over(mass);
                         const velo = accel.times(time);
 
-                        const momentum = precision(3) `F (${force}) × Δt (1/60 s) = Δρ (${impulse})`;
+                        // const momentum = precision(3) `F (${force}) × Δt (1/60 s) = Δρ (${impulse})`;
                         const acceleration = precision(3) `F (${force}) / m (${mass}) = a (${accel})`;
                         const velocity = precision(3) `a (${accel}) × Δt (1/60 s) = Δv (${velo})`;
 
@@ -167,26 +167,26 @@ export class LevelScene extends Phaser.Scene {
             const m = new units.Measurement(body.mass, units.Mass.Kilogram);
 
             // 100px = 1m
-            const x = new units.VectorMeasurement(
-                vector.div(this.target, 100),
-                new units.Unit([units.Distance.Meter]));
+            const x =
+                new units.VectorMeasurement(this.target, units.Distance.Pixel)
+                    .to(units.Distance.Meter);
 
-            // velocity is added every timestep according to 
-            // http://brm.io/matter-js/docs/files/src_body_Body.js.html
-            // with no division, meaning velocity units are actually
-            // pixels per 1/60th of a second
-            // so to get px/s, multiply by 60
-            // then to get m/s, divide by 100
-            const v = new units.VectorMeasurement(
-                vector.mult(body.velocity, 0.6),
-                new units.Unit([units.Distance.Meter], [units.Time.Second]));
+            const v =
+                new units.VectorMeasurement(body.velocity, units.pixelsPerStep)
+                    .to(units.Distance.Meter, units.Time.Second);
+
+            const theta = new units.Measurement(this.target.angle, units.Angle.Degree);
+
+            const omega =
+                new units.Measurement(body.angularVelocity, new units.Unit(units.Angle.Degree, units.Time.Step))
+                    .to(units.Angle.Degree, units.Time.Second);
 
             this.targetInfo.setText([
                 fixed(1) `m: ${m}`,
                 fixed(1) `x: ${x}`,
                 fixed(1) `v: ${v}`,
-                fixed(1) `θ: ${this.target.angle} °`,
-                fixed(1) `ω: ${body.angularVelocity} °/s`,
+                fixed(1) `θ: ${theta}`,
+                fixed(1) `ω: ${omega}`,
             ]);
         }
     }
