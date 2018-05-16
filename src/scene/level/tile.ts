@@ -44,6 +44,7 @@ export class Tile extends Phaser.GameObjects.Sprite {
             frictionStatic: 0,
             restitution: config.elastic ? 1 : 0
         });
+
         matterObj.type = "tile";
         matterObj.setInteractive();
     }
