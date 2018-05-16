@@ -18,16 +18,18 @@ class TourDeForceGame extends Phaser.Game {
         const renderer = this.renderer as Phaser.Renderer.WebGL.WebGLRenderer;
         renderer.addPipeline("greyscale", new GreyscalePipeline(this));
 
-        console.log("eggu");
-
         this.events.on("ready", this.onready, this);
     }
 
     public onready() {
+
+
+
+        console.log("eggu");
         // this.scene.start("level", { level: 0 });
     }
 }
 
 window.addEventListener("load", () => {
-    const game = new TourDeForceGame();
+    let game = new TourDeForceGame();
 });

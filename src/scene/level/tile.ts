@@ -6,6 +6,7 @@ export interface TileConfig {
     x: number;
     y: number;
     type: TileType;
+    elastic?: boolean;
 }
 
 export class Tile extends Phaser.GameObjects.Sprite {
@@ -39,7 +40,9 @@ export class Tile extends Phaser.GameObjects.Sprite {
         const matterObj = scene.matter.add.gameObject(this, {
             chamfer: { radius: 16 },
             mass,
-            frictionAir: 0
+            frictionAir: 0, // no friction; these are physics problems
+            frictionStatic: 0,
+            restitution: config.elastic ? 1 : 0
         });
         matterObj.type = "tile";
         matterObj.setInteractive();

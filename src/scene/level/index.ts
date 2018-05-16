@@ -1,9 +1,8 @@
-import { Button } from "@control/button";
 import { clamp, fixed, precision, Ray, units, vector } from "@util";
 import * as Phaser from "phaser";
 
 import { Tile, TileConfig } from "./tile";
-import { ControlAlignment, GameMode, HudButtonConfig, ModeHudButtonConfig } from "./ui";
+import { ControlAlignment, GameMode, HudButton, HudButtonConfig, ModeHudButtonConfig } from "./ui";
 
 const { sin, cos, random, PI, max, min, abs } = Math;
 
@@ -92,7 +91,7 @@ export class LevelScene extends Phaser.Scene {
             // cam.scrollY = this.track.y;
         }
 
-        const clampedX = clamp(-50, cam.scrollX, gameWidth + 50);
+        const clampedX = clamp(-50, cam.scrollX, gameWidth + 50 - width);
 
         this.hud.setPosition(clampedX, cam.scrollY);
         this.overlays.setPosition(clampedX, cam.scrollY);
@@ -211,12 +210,20 @@ export class LevelScene extends Phaser.Scene {
         this.grid = this.add.tileSprite(gameWidth / 2, height / 2, gameWidth, gameHeight, "tile-level");
         this.grid.flipY = true;
 
-        this.matter.world.setBounds(50, 50, gameWidth - 100, gameHeight);
+        this.matter.world.setBounds(50, 50, gameWidth - 100, gameHeight, 512);
         const walls = this.matter.world.walls as { left: Matter.Body; right: Matter.Body; top: Matter.Body; bottom: Matter.Body };
+
         walls.top.friction = 0;
+        walls.top.restitution = 0;
+
         walls.bottom.friction = 0;
+        walls.bottom.restitution = 0;
+
         walls.left.friction = 0;
+        walls.left.restitution = 0;
+
         walls.right.friction = 0;
+        walls.right.restitution = 0;
 
         // add the tiles
         this.tileContainer = this.make.container({});
@@ -381,50 +388,7 @@ export class LevelScene extends Phaser.Scene {
     }
 
     private makeHudButton(config: HudButtonConfig) {
-        const { height, width } = this.cameras.main;
-
-        const c = {
-            align: ControlAlignment.Left,
-            ...config
-        };
-
-        let offset = c.offset || { x: 0, y: 0 };
-
-        if ((c.align & ControlAlignment.Right) === ControlAlignment.Right)
-            offset = { x: width - offset.x, y: offset.y };
-
-        if ((c.align & ControlAlignment.Bottom) === ControlAlignment.Bottom)
-            offset = { x: offset.x, y: height - offset.y };
-
-        const btn = new Button(this, {
-            ...offset,
-            text: {
-                text: c.text,
-                style: {
-                    fontFamily: "Clear Sans",
-                    fontStyle: "bold",
-                    fontSize: 24,
-                    fill: "white"
-                }
-            },
-            sprite: {
-                key: c.sprite,
-                frame: c.frame,
-                scale: 0.5
-            },
-            tooltip: {
-                text: c.tooltip,
-                style: {
-                    fontFamily: "Clear Sans",
-                    fontSize: 12,
-                    fill: "white"
-                }
-            }
-        });
-
-        if (c.handler) btn.on("pointerdown", c.handler);
-
-        return btn;
+        return new HudButton(this, config);
     }
 
     // #endregion

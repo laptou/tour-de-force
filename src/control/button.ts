@@ -14,14 +14,20 @@ export class Button extends Phaser.GameObjects.Container {
         this.add(this.sprite);
 
         if ("text" in config) {
-            this.text = scene.make.text({ origin: 0.5, ...config.text }, false);
+            const textConfig = { origin: 0.5, ...config.text };
+
+            if (textConfig.style.fontSize)
+                textConfig.style.fontSize *= window.devicePixelRatio;
+
+            textConfig.scale = ("scale" in textConfig ? textConfig.scale : 1) / window.devicePixelRatio;
+
+            this.text = scene.make.text(textConfig, false);
             this.add(this.text);
         }
 
         if ("tooltip" in config) {
-            this.tooltip = new Tooltip(scene, { target: this, ...config.tooltip });
-            this.tooltip.x = -this.tooltip.width / 2;
-            this.tooltip.y = -this.tooltip.height - 35;
+            this.tooltip = new Tooltip(scene, { target: this, origin: 0.5, ...config.tooltip });
+            this.tooltip.y = - 45;
 
             this.add(this.tooltip);
         }

@@ -8,9 +8,12 @@ export class Tooltip extends Phaser.GameObjects.Container {
 
         const padding: number = config.padding || 5;
 
+        if (config.style.fontSize)
+            config.style.fontSize *= window.devicePixelRatio;
+
+        config.scale = ("scale" in config ? config.scale : 1) / window.devicePixelRatio;
+
         this.text = scene.make.text(config);
-        this.text.x += padding;
-        this.text.y += padding;
         this.text.resolution = window.devicePixelRatio;
 
         const { width, height } = this.text;
@@ -19,14 +22,14 @@ export class Tooltip extends Phaser.GameObjects.Container {
 
         this.graphics.fillStyle(0xAAAAAA, 0.85);
         this.graphics.fillRect(
-            0, 0,
+            -padding - width / 2, -padding - height / 2,
             width + padding * 2,
             height + padding * 2);
 
         this.graphics.fillTriangle(
-            width / 2 - 5 + padding, height + padding * 2,
-            width / 2 + 5 + padding, height + padding * 2,
-            width / 2 + padding, height + padding * 2 + 7);
+            -5, height / 2 + padding,
+            5, height / 2 + padding,
+            0, height / 2 + padding + 7);
 
         this.add([this.graphics, this.text]);
         this.alpha = 0;

@@ -552,7 +552,7 @@ export namespace units {
             }
 
             const xm = new Measurement(this.x, this.unit).to(unit);
-            const ym = new Measurement(this.x, this.unit).to(unit);
+            const ym = new Measurement(this.y, this.unit).to(unit);
 
             return new VectorMeasurement(xm.value, ym.value, unit);
         }
