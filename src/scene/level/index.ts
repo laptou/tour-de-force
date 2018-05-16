@@ -23,6 +23,7 @@ export class LevelScene extends Phaser.Scene {
     private actionInfo!: Phaser.GameObjects.Text;
     private targetInfo!: Phaser.GameObjects.Text;
     private hud!: Phaser.GameObjects.Container;
+    private frame!: Phaser.GameObjects.Graphics;
     private overlays!: Phaser.GameObjects.Graphics;
     private tileContainer!: Phaser.GameObjects.Container;
     private grid!: Phaser.GameObjects.TileSprite;
@@ -91,8 +92,10 @@ export class LevelScene extends Phaser.Scene {
             // cam.scrollY = this.track.y;
         }
 
+
         const clampedX = clamp(-50, cam.scrollX, gameWidth + 50 - width);
 
+        this.frame.setPosition(clampedX, cam.scrollY);
         this.hud.setPosition(clampedX, cam.scrollY);
         this.overlays.setPosition(clampedX, cam.scrollY);
 
@@ -244,6 +247,15 @@ export class LevelScene extends Phaser.Scene {
         const cam = this.cameras.main;
         const { height, width } = cam;
 
+        this.frame = this.add.graphics()
+            .fillStyle(0xFFFFFF)
+            .fillRect(0, 0, 50, height)
+            .fillRect(width - 50, 0, 50, height)
+            .fillRect(50, 0, width - 100, 50)
+            .fillRect(50, height - 50, width - 100, 50)
+            .lineStyle(4, 0x000000)
+            .strokeRect(48, 48, width - 96, height - 96);
+
         this.overlays = this.add.graphics();
 
         this.hud = this.add.container(0, 0);
@@ -315,9 +327,11 @@ export class LevelScene extends Phaser.Scene {
                 const s = this.ray.source;
                 const d = this.ray.times(0.01).direction;
 
+                const mag = new Phaser.Math.Vector2(d.x, d.y);
+
                 body.applyForceFrom(
                     new Phaser.Math.Vector2(s.x, s.y),
-                    new Phaser.Math.Vector2(d.x, d.y)
+                    mag.scale(Math.min(1, 300 / mag.length()))
                 );
             }
 
@@ -329,7 +343,8 @@ export class LevelScene extends Phaser.Scene {
 
     private onPointerMove(pointer: Phaser.Input.Pointer) {
         if (this.ray) {
-            this.ray.direction = vector.sub(pointer.position, this.ray.source);
+            let mag = vector.sub(pointer.position, this.ray.source);
+            this.ray.direction = mag.times(Math.min(1, 300 / mag.length()));
             this.dirty = true;
             return;
         }
