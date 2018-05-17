@@ -1,8 +1,16 @@
 import { reverseEnum } from "@util/index.ts";
-
-import { fixed, precision, Vector, VectorLike } from "./math";
+import { fixed, precision } from "./format";
+import { Vector, VectorLike } from "./math";
 
 const { PI } = Math;
+
+export function abs(x: number): number;
+export function abs(x: Measurement): Measurement;
+export function abs(x: number | Measurement): number | Measurement;
+export function abs(x: number | Measurement): number | Measurement {
+    if (typeof x === "number") return Math.abs(x);
+    else return new Measurement(Math.abs(x.value), x.unit);
+}
 
 export enum Distance {
     Pixel = "px",

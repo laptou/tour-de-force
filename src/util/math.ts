@@ -1,4 +1,3 @@
-import { Measurement, VectorMeasurement } from "./measurement";
 
 const { pow, sqrt, hypot } = Math;
 
@@ -8,45 +7,6 @@ export function square(n: number) {
 
 export function clamp(min: number, x: number, max: number) {
     return Math.min(Math.max(x, min), max);
-}
-
-export function abs(x: number): number;
-export function abs(x: Measurement): Measurement;
-export function abs(x: number | Measurement): number | Measurement;
-export function abs(x: number | Measurement): number | Measurement {
-    if (typeof x === "number") return Math.abs(x);
-    else return new Measurement(Math.abs(x.value), x.unit);
-}
-
-type Numeric = (number | Vector | Measurement | VectorMeasurement);
-
-export function precision(p?: number) {
-    return (tags: TemplateStringsArray, ...keys: Numeric[]) => {
-        let str = tags[0];
-        for (let i = 1; i < tags.length; i++) {
-            str += keys[i - 1].toPrecision(p);
-            str += tags[i];
-        }
-
-        return str;
-    }
-}
-
-export function fixed(p?: number) {
-    return (tags: TemplateStringsArray, ...keys: Numeric[]) => {
-        let str = tags[0];
-        for (let i = 1; i < tags.length; i++) {
-            let num = keys[i - 1];
-
-            if (!(num instanceof Vector) && typeof p === "number" && abs(num).valueOf() < pow(10, -p))
-                num = abs(num); // fixes -0.0
-
-            str += num.toFixed(p);
-            str += tags[i];
-        }
-
-        return str;
-    }
 }
 
 export type VectorLike = { x: number; y: number };
@@ -116,8 +76,6 @@ export class Vector {
     public toFixed(p?: number) { return `⟨${this.x.toFixed(p)}, ${this.y.toFixed(p)}⟩`; }
     public toPrecision(p?: number) { return `⟨${this.x.toPrecision(p)}, ${this.y.toPrecision(p)}⟩`; }
     public toExponential(p?: number) { return `⟨${this.x.toExponential(p)}, ${this.y.toExponential(p)}⟩`; }
-
-
 }
 
 export class Ray {
