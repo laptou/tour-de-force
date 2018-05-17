@@ -1,4 +1,4 @@
-import { SizeLike, VectorLike } from "@util/math";
+import { VectorLike } from "@util/math";
 
 export const enum GameMode {
     View = "view",
@@ -25,13 +25,18 @@ export interface GoalData {
     minimum?: number | VectorLike;
     maximum?: number | VectorLike;
     type: GoalType;
-    size: SizeLike;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    position: VectorLike;
     objectives: ObjectiveConfig[];
 }
 
 export interface LevelData {
     index: number;
-    size: number;
+    width: number;
+    height: number;
     modes: GameMode[];
     tiles: TileData[];
     goals: GoalData[];

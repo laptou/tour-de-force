@@ -2,7 +2,7 @@ import { LevelData } from "@lib/level";
 import { Goal } from "@scene/level/goal";
 import { LevelHud } from "@scene/level/hud";
 import { LevelState } from "@scene/level/state";
-import { clamp } from "@util/math";
+import { clamp, Size, SizeLike, Vector, VectorLike } from "@util/math";
 import * as Phaser from "phaser";
 
 import { Tile } from "./tile";
@@ -13,9 +13,12 @@ export class LevelScene extends Phaser.Scene {
 
     public level!: LevelData | number;
     public state!: LevelState;
-    private hud!: LevelHud;
 
-    private pan = { x: 0, y: 0 };
+    public bounds!: SizeLike;
+    public padding!: SizeLike;
+    public origin!: VectorLike;
+
+    private hud!: LevelHud;
 
     private tiles!: Phaser.GameObjects.Container;
     private grid!: Phaser.GameObjects.TileSprite;
@@ -69,41 +72,67 @@ export class LevelScene extends Phaser.Scene {
 
         this.hud = new LevelHud(this);
         this.add.existing(this.hud);
+
+        this.matter.world.createDebugGraphic();
+        this.matter.world.drawDebug = true;
     }
 
     public update(total: number, delta: number) {
         const cam = this.cameras.main;
-        const { height, width } = cam;
-        const gameWidth = (this.level as LevelData).size * 32;
+        const level = this.level as LevelData;
 
         // update camera
 
         if (this.state.track) {
-            cam.scrollX = this.state.track.x - width / 2;
+            cam.scrollX = this.state.track.x - this.bounds.width / 2;
+            // cam.scrollY = this.state.track.y - this.bounds.height / 2;
         }
 
-        const clampedX = clamp(-50, cam.scrollX, gameWidth + 50 - width);
+        const clampedX = clamp(0, cam.scrollX, cam.width - this.bounds.width - this.padding.width);
+        const clampedY = clamp(0, cam.scrollY, cam.height - this.bounds.height - this.padding.height);
 
-        this.hud.setPosition(clampedX, cam.scrollY);
+        this.hud.setPosition(clampedX, 0);
         this.hud.update();
     }
 
     private createWorld() {
+
         const cam = this.cameras.main;
         const { height, width } = cam;
 
         // load the level
         this.level = require(`@res/level/${0}.json`) as LevelData;
 
-        // set up camera and physics
-        const gameWidth = this.level.size * 32, gameHeight = height - 100;
+        // set up camera and physics        
+        this.bounds = new Size(this.level.width * 32, this.level.height * 32);
 
-        cam.setBounds(-50, 0, gameWidth + 100, height);
+        this.padding = new Size(
+            max(50, (width - this.bounds.width) / 2),
+            max(50, (height - this.bounds.height) / 2));
 
-        this.grid = this.add.tileSprite(gameWidth / 2, height / 2, gameWidth, gameHeight, "tile-level");
+        this.origin = new Vector(this.padding.width, this.bounds.height + this.padding.height);
+
+        cam.setBounds(
+            0, 0,
+            this.bounds.width + this.padding.width * 2,
+            this.bounds.height + this.padding.height * 2);
+
+        this.grid = this.add.tileSprite(
+            this.padding.width + this.bounds.width / 2,
+            this.padding.height + this.bounds.height / 2,
+            this.bounds.width,
+            this.bounds.height,
+            "tile-level");
+
         this.grid.flipY = true;
 
-        this.matter.world.setBounds(0, 50, gameWidth, gameHeight, 512);
+        this.matter.world.setBounds(
+            this.padding.width,
+            this.padding.height,
+            this.bounds.width,
+            this.bounds.height,
+            512);
+
         const walls = this.matter.world.walls as { left: Matter.Body; right: Matter.Body; top: Matter.Body; bottom: Matter.Body };
 
         walls.top.friction = 0;
@@ -128,7 +157,12 @@ export class LevelScene extends Phaser.Scene {
         this.state.modes = this.level.modes;
         this.state.level = this.level;
 
+
         for (const data of this.level.tiles) {
+            // invert Y coordinate so Y = 0 is at the bottom
+            data.y = this.origin.y / 32 - data.y;
+            data.x = this.origin.x / 32 + data.x;
+
             const tile = new Tile(this, data);
 
             tile.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
@@ -142,6 +176,10 @@ export class LevelScene extends Phaser.Scene {
         }
 
         for (const data of this.level.goals) {
+            // invert Y coordinate so Y = 0 is at the bottom
+            data.y = this.origin.y / 32 - data.y;
+            data.x = this.origin.x / 32 + data.x;
+
             const goal = new Goal(this, data);
 
             this.tiles.add(goal);

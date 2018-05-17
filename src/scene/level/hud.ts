@@ -37,16 +37,17 @@ export class LevelHud extends Phaser.GameObjects.Container {
         this.scene = scene;
 
         const cam = scene.cameras.main;
-        const { height, width } = cam;
+        const { height, width } = scene.bounds;
+        const { height: py, width: px } = scene.padding;
 
         this.frame = scene.make.graphics({})
             .fillStyle(0xFFFFFF)
-            .fillRect(0, 0, 50, height)
-            .fillRect(width - 50, 0, 50, height)
-            .fillRect(50, 0, width - 100, 50)
-            .fillRect(50, height - 50, width - 100, 50)
+            .fillRect(0, 0, px, height)
+            .fillRect(width + px * 2, 0, px, height)
+            .fillRect(0, 0, width, py)
+            .fillRect(0, height + py * 2, width, py)
             .lineStyle(4, 0x000000)
-            .strokeRect(48, 48, width - 96, height - 96);
+            .strokeRect(px, py, width, height);
         this.add(this.frame);
 
         this.overlays = scene.make.graphics({});
@@ -56,24 +57,24 @@ export class LevelHud extends Phaser.GameObjects.Container {
 
         // current level
         this.add(scene.make.text({
-            x: 50,
-            y: height - 40,
+            x: px,
+            y: py + height + 10,
             text: `Level ${(scene.state.level as LevelData).index + 1}`,
             style: Text.Header
         }));
 
         // information
         this.add(this.actionInfo = scene.make.text({
-            x: width / 2,
-            y: height - 20,
+            x: px + width / 2,
+            y: py + height + 30,
             text: "",
             origin: 0.5,
             style: Text.Normal.Light
         }));
 
         this.add(this.targetInfo = scene.make.text({
-            x: width - 50,
-            y: 100,
+            x: px + width,
+            y: py,
             text: "",
             origin: { x: 1, y: 0 },
             backgroundColor: "white",
@@ -104,7 +105,7 @@ export class LevelHud extends Phaser.GameObjects.Container {
         for (const mode of scene.state.modes) {
             const btn = this.makeModeHudButton(scene, {
                 sprite: "controls",
-                offset: { x, y: 40 },
+                offset: { x, y: py - 40 },
                 mode,
                 ...modeBtns[mode]
             });
@@ -122,9 +123,7 @@ export class LevelHud extends Phaser.GameObjects.Container {
 
     public update() {
         const cam = this.scene.cameras.main;
-        const { height, width } = cam;
-        const gameWidth = (this.scene.level as LevelData).size * 32;
-
+        const level = this.scene.level as LevelData;
         const target = this.scene.state.target;
 
         if (target) {
@@ -272,6 +271,8 @@ export class LevelHud extends Phaser.GameObjects.Container {
         this.add(this.labels.ray.x);
         this.add(this.labels.ray.y);
 
+        this.scene.matter.world.pause();
+
         this.dirty = true;
     }
 
@@ -324,6 +325,8 @@ export class LevelHud extends Phaser.GameObjects.Container {
     }
 
     private activateRay() {
+        this.scene.matter.world.resume();
+
         if (this.ray && this.scene.state.target) {
             const body = this.scene.state.target as any as Phaser.Physics.Matter.Components.Force & Phaser.Physics.Matter.Components.Velocity;
 
