@@ -111,39 +111,51 @@ export class LevelScene extends Phaser.Scene {
 
             if (this.target && this.ray) {
                 let color;
-                let unit;
+                let info;
                 const body = this.target.body as Matter.Body;
 
                 switch (this.mode) {
                     case GameMode.Force:
                         color = 0x800000;
 
-                        // velocity is in pixels per timestep (1/60s)
-                        // so all other units need to be divided accordingly
+                        {
+                            // velocity is in pixels per timestep (1/60s)
+                            // so all other units need to be divided accordingly
 
-                        const time = new units.Measurement(1 / 60, units.Time.Second);
-                        const mass = new units.Measurement(body.mass, units.Mass.Kilogram);
-                        const force = new units.Measurement(this.ray.length, units.Force.Newton).times(100);
+                            const time = new units.Measurement(1 / 60, units.Time.Second);
+                            const mass = new units.Measurement(body.mass, units.Mass.Kilogram);
+                            const force = this.queryRay().magnitude();
 
-                        // const impulse = force.times(time);
-                        const accel = force.over(mass);
-                        const velo = accel.times(time);
+                            const accel = force.over(mass);
+                            const velo = accel.times(time);
 
-                        // const momentum = precision(3) `F (${force}) × Δt (1/60 s) = Δρ (${impulse})`;
-                        const acceleration = precision(3) `F (${force}) / m (${mass}) = a (${accel})`;
-                        const velocity = precision(3) `a (${accel}) × Δt (1/60 s) = Δv (${velo})`;
+                            const acceleration = precision(3) `F (${force}) / m (${mass}) = a (${accel})`;
+                            const velocity = precision(3) `a (${accel}) × Δt (1/60 s) = Δv (${velo})`;
 
-                        unit = [acceleration, velocity].join("\n");
+                            info = [acceleration, velocity].join("\n");
+                        }
 
+                        break;
 
+                    case GameMode.Velocity:
+                        color = 0x006ad1;
+
+                        {
+
+                            const mass = new units.Measurement(body.mass, units.Mass.Kilogram);
+                            const velo = new units.VectorMeasurement(this.ray.direction, units.metersPerSecond);
+
+                            // const momentum = precision(3) `F (${force}) × Δt (1/60 s) = Δρ (${impulse})`;
+                            const momentum = precision(3) `m (${mass}) * v (${velo}) = ρ (${mass.times(velo.magnitude())})`;
+
+                            info = [momentum].join("\n");
+                        }
 
                         break;
                     default:
                         color = 0;
                         break;
                 }
-
-
 
                 this.overlays.lineStyle(4, color);
 
@@ -166,7 +178,7 @@ export class LevelScene extends Phaser.Scene {
                     p1.x, p1.y,
                 );
 
-                this.actionInfo.text = unit || "";
+                this.actionInfo.text = info || "";
             }
 
             this.actionInfo.updateText();
@@ -321,11 +333,20 @@ export class LevelScene extends Phaser.Scene {
 
         this.hud.add(this.makeModeHudButton({
             sprite: "controls",
-            frame: 2,
+            frame: 5,
             offset: { x: 150, y: 40 },
-            text: "KE",
-            tooltip: "Kinetic Energy Mode",
-            mode: GameMode.KineticEnergy
+            text: "V",
+            tooltip: "Velocity Mode",
+            mode: GameMode.Velocity
+        }));
+
+        this.hud.add(this.makeModeHudButton({
+            sprite: "controls",
+            frame: 3,
+            offset: { x: 200, y: 40 },
+            text: "M",
+            tooltip: "Mass Mode",
+            mode: GameMode.Mass
         }));
     }
 
@@ -353,22 +374,47 @@ export class LevelScene extends Phaser.Scene {
         this.dirty = true;
     }
 
+    private queryRay(): units.VectorMeasurement {
+        if (!this.ray)
+            return units.VectorMeasurement.zero;
+
+        let unit: units.Unit = units.scalar;
+        let factor = 1;
+
+        switch (this.mode) {
+            case GameMode.Force:
+                unit = new units.Unit(units.Force.Newton);
+                factor = 100; // for display, arrow units are 100 * N
+                break;
+            case GameMode.Velocity:
+                unit = units.metersPerSecond;
+                factor = 1 / 30; // max 10 m/s
+                break;
+        }
+
+        return new units.VectorMeasurement(vector.mult(this.ray.direction, factor), unit);
+    }
+
     private updateRay(x: number, y: number) {
         if (this.ray) {
-            let mag = vector.sub({ x, y }, this.ray.source);
-            mag = mag.times(Math.min(1, 300 / mag.length()));
-            this.ray.direction = mag;
+            let d = vector.sub({ x, y }, this.ray.source);
+            let dlen = d.length();
+            d = d.times(Math.min(1, 300 / dlen));
+
+            this.ray.direction = d;
 
             if (this.labels.ray) {
-                const offset = vector.div(mag, 2);
+                const offset = vector.div(d, 2);
                 const source = this.ray.source;
-                const alpha = Math.min(1, mag.length() / 50);
+                const alpha = Math.min(1, dlen / 50);
                 const camera = this.cameras.main;
 
-                this.labels.ray.x.setText(new units.Measurement(mag.x, units.Force.Newton).toFixed(1));
+                const vec = this.queryRay();
+
+                this.labels.ray.x.setText(new units.Measurement(vec.x, vec.unit).toPrecision(3));
                 this.labels.ray.x.setAlpha(alpha);
 
-                this.labels.ray.y.setText(new units.Measurement(mag.y, units.Force.Newton).toFixed(1));
+                this.labels.ray.y.setText(new units.Measurement(vec.y, vec.unit).toPrecision(3));
                 this.labels.ray.y.setAlpha(alpha);
             }
 
@@ -378,16 +424,41 @@ export class LevelScene extends Phaser.Scene {
 
     private activateRay() {
         if (this.ray && this.target) {
-            const body = this.target as any as Phaser.Physics.Matter.Components.Force;
-            const s = this.ray.source;
-            const d = this.ray.times(0.01).direction;
+            const body = this.target as any as Phaser.Physics.Matter.Components.Force & Phaser.Physics.Matter.Components.Velocity;
 
-            const mag = new Phaser.Math.Vector2(d.x, d.y);
+            const s = new units.VectorMeasurement(this.ray.source, units.Distance.Meter);
+            const d = this.ray.direction;
 
-            body.applyForceFrom(
-                new Phaser.Math.Vector2(s.x, s.y),
-                mag.scale(Math.min(1, 300 / mag.length()))
-            );
+            switch (this.mode) {
+                case GameMode.Force:
+                    // gonna treat the arrow length as 100 * matter-newton   
+                    let force = new units.VectorMeasurement(vector.div(d, 100), units.pixelNewton);
+
+                    // maximum 3 matter-newton = 300 N
+                    force = force.times(Math.min(1, 3 / force.length()));
+
+                    // kg * px / s^2 is matterjs's internal force unit
+                    // see http://brm.io/matter-js/docs/files/src_body_Body.js.html line 582
+                    // so no conversion necessary
+
+                    body.applyForceFrom(
+                        new Phaser.Math.Vector2(s.x, s.y),
+                        new Phaser.Math.Vector2(force.x, force.y)
+                    );
+
+                    break;
+                case GameMode.Velocity:
+                    // gonna treat the arrow length as 30 * m / s
+                    let velocity = new units.VectorMeasurement(vector.div(d, 30), units.metersPerSecond);
+
+                    // maximum 10 m/s
+                    velocity = velocity.times(Math.min(1, 10 / velocity.length()));
+
+                    velocity = velocity.to(units.pixelsPerStep);
+
+                    body.setVelocity(velocity.x, velocity.y);
+                    break;
+            }
         }
     }
 
@@ -417,6 +488,8 @@ export class LevelScene extends Phaser.Scene {
         tile.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
             switch (this.mode) {
                 case GameMode.Force:
+                case GameMode.Velocity:
+                case GameMode.Mass:
                     this.target = tile;
                     this.createRay(pointer.x, pointer.y);
                     break;

@@ -39,7 +39,7 @@ export function clamp(min: number, x: number, max: number) {
 }
 
 export function precision(p?: number) {
-    return (tags: TemplateStringsArray, ...keys: (number | Vector | units.Measurement)[]) => {
+    return (tags: TemplateStringsArray, ...keys: (number | Vector | units.Measurement | units.VectorMeasurement)[]) => {
         let str = tags[0];
         for (let i = 1; i < tags.length; i++) {
             str += keys[i - 1].toPrecision(p);
@@ -51,7 +51,7 @@ export function precision(p?: number) {
 }
 
 export function fixed(p?: number) {
-    return (tags: TemplateStringsArray, ...keys: (number | Vector | units.Measurement)[]) => {
+    return (tags: TemplateStringsArray, ...keys: (number | Vector | units.Measurement | units.VectorMeasurement)[]) => {
         let str = tags[0];
         for (let i = 1; i < tags.length; i++) {
             let num = keys[i - 1];
@@ -92,13 +92,14 @@ export class Vector {
     public plus(v: VectorLike) { return vector.add(this, v); }
     public minus(v: VectorLike) { return vector.sub(this, v); }
     public times(v: number | VectorLike) { return vector.mult(this, v); }
+    public over(v: number | VectorLike) { return vector.div(this, v); }
     public dot(v: VectorLike) { return vector.dot(this, v); }
     public ray() { return new Ray(Vector.zero, this); }
 
-    public toString() { return `<${this.x}, ${this.y}>`; }
-    public toFixed(p?: number) { return `<${this.x.toFixed(p)}, ${this.y.toFixed(p)}>`; }
-    public toPrecision(p?: number) { return `<${this.x.toPrecision(p)}, ${this.y.toPrecision(p)}>`; }
-    public toExponential(p?: number) { return `<${this.x.toExponential(p)}, ${this.y.toExponential(p)}>`; }
+    public toString() { return `⟨${this.x}, ${this.y}⟩`; }
+    public toFixed(p?: number) { return `⟨${this.x.toFixed(p)}, ${this.y.toFixed(p)}⟩`; }
+    public toPrecision(p?: number) { return `⟨${this.x.toPrecision(p)}, ${this.y.toPrecision(p)}⟩`; }
+    public toExponential(p?: number) { return `⟨${this.x.toExponential(p)}, ${this.y.toExponential(p)}⟩`; }
 }
 // tslint:enable:no-use-before-declare
 
@@ -316,6 +317,10 @@ export namespace units {
             return str;
         }
 
+        public times(other: Unit) { return Unit.mult(this, other); }
+
+        public over(other: Unit) { return Unit.div(this, other); }
+
         public static mult(u1: Unit, u2: Unit) {
             u1 = u1.expanded();
             u2 = u2.expanded();
@@ -338,6 +343,10 @@ export namespace units {
 
     }
 
+    export const scalar = new units.Unit([]);
+    export const pixelNewton = new units.Unit(
+        [units.Mass.Kilogram, units.Distance.Pixel],
+        [units.Time.Second, units.Time.Second]);
     export const pixelsPerStep = new Unit(Distance.Pixel, Time.Step);
     export const metersPerSecond = new Unit(Distance.Meter, Time.Second);
 
@@ -487,16 +496,14 @@ export namespace units {
             const targetNum = [...targetExpanded.numerator];
             const targetDen = [...targetExpanded.denominator];
 
-            for (let ni = 0; ni < num.length; ni++) {
-                const [numUnit] = num.splice(ni, 1);
+            for (const numUnit of num) {
                 const i = targetNum.findIndex(n => convert.possible(n, numUnit));
                 const [targetNumUnit] = targetNum.splice(i, 1);
 
                 val = convert.auto(val, numUnit, targetNumUnit);
             }
 
-            for (let di = 0; di < den.length; di++) {
-                const [denUnit] = den.splice(di, 1);
+            for (const denUnit of den) {
                 const i = targetDen.findIndex(d => convert.possible(d, denUnit));
                 const [targetDenUnit] = targetDen.splice(i, 1);
 
@@ -508,6 +515,7 @@ export namespace units {
     }
 
     export class VectorMeasurement extends Vector {
+        public static zero = new VectorMeasurement(0, 0, scalar);
         public unit: Unit;
 
         public constructor(x: VectorLike, u: Unit | BaseUnit);
@@ -523,19 +531,19 @@ export namespace units {
         }
 
         public toString() {
-            return `<${this.x}, ${this.y}> ${this.unit}`;
+            return `⟨${this.x}, ${this.y}⟩ ${this.unit}`;
         }
 
         public toFixed(p?: number) {
-            return fixed(p) `<${this.x}, ${this.y}> ` + this.unit.toString();
+            return fixed(p) `⟨${this.x}, ${this.y}⟩ ` + this.unit.toString();
         }
 
         public toPrecision(p?: number) {
-            return precision(p) `<${this.x}, ${this.y}> ` + this.unit.toString();
+            return precision(p) `⟨${this.x}, ${this.y}⟩ ` + this.unit.toString();
         }
 
         public toExponential(p?: number) {
-            return `<${this.x.toExponential(p)}, ${this.y.toExponential(p)}> ${this.unit}`;
+            return `⟨${this.x.toExponential(p)}, ${this.y.toExponential(p)}⟩ ${this.unit}`;
         }
 
         public to(target: Unit): VectorMeasurement;
@@ -555,6 +563,28 @@ export namespace units {
             const ym = new Measurement(this.y, this.unit).to(unit);
 
             return new VectorMeasurement(xm.value, ym.value, unit);
+        }
+
+        public magnitude() {
+            return new Measurement(super.length(), this.unit);
+        }
+
+        public times(v: number | VectorLike | Measurement | VectorMeasurement) {
+            if (v instanceof Measurement)
+                return new VectorMeasurement(super.times(v.value), this.unit.times(v.unit));
+            if (v instanceof VectorMeasurement)
+                return new VectorMeasurement(super.times(v), this.unit.times(v.unit));
+
+            return new VectorMeasurement(super.times(v), this.unit);
+        }
+
+        public over(v: number | VectorLike | Measurement | VectorMeasurement) {
+            if (v instanceof Measurement)
+                return new VectorMeasurement(super.over(v.value), this.unit.over(v.unit));
+            if (v instanceof VectorMeasurement)
+                return new VectorMeasurement(super.over(v), this.unit.over(v.unit));
+
+            return new VectorMeasurement(super.over(v), this.unit);
         }
     }
 }

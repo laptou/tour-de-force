@@ -4,7 +4,8 @@ import { Scene } from "phaser";
 export enum GameMode {
     View,
     Force,
-    KineticEnergy
+    Velocity,
+    Mass,
 }
 
 export enum ControlAlignment {
