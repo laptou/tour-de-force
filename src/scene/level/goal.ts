@@ -1,16 +1,7 @@
-import { GoalType, Objective } from "@lib/level";
-
-
-export interface GoalConfig {
-    objectives: Objective[];
-    size: { width: number; height: number };
-    type?: GoalType;
-}
+import { GoalData } from "@lib/level";
 
 export class Goal extends Phaser.GameObjects.Container {
-    constructor(scene: Phaser.Scene, config: GoalConfig) {
-        config = { type: GoalType.Required, ...config };
-
+    constructor(scene: Phaser.Scene, config: GoalData) {
         let { width, height } = config.size;
         width *= 32;
         height *= 32;
@@ -20,7 +11,6 @@ export class Goal extends Phaser.GameObjects.Container {
             .fillStyle(0x000000, 0.25)
             .fillRect(0, 0, width, height)
             .strokeRect(0, 0, width, height);
-
 
         super(scene);
 

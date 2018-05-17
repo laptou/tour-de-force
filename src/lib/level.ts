@@ -1,3 +1,5 @@
+import { SizeLike, VectorLike } from "@util/math";
+
 export const enum GameMode {
     View = "view",
     Force = "force",
@@ -19,30 +21,39 @@ export interface TileData {
     show?: { mass?: boolean; }
 }
 
+export interface GoalData {
+    minimum?: number | VectorLike;
+    maximum?: number | VectorLike;
+    type: GoalType;
+    size: SizeLike;
+    objectives: ObjectiveConfig[];
+}
+
 export interface LevelData {
     index: number;
     size: number;
     modes: GameMode[];
-    content: TileData[];
+    tiles: TileData[];
+    goals: GoalData[];
 }
 
 export enum ObjectiveType {
-    Position,
-    Velocity,
-    Speed,
-    Momentum,
-    AngularVelocity
+    Position = "position",
+    Velocity = "velocity",
+    Speed = "speed",
+    Momentum = "momentum",
+    AngularVelocity = "angular-velocity"
 }
 
 export interface ObjectiveConfig {
-    target: { minimum: number; maximum: number } | number;
+    target: { minimum: number | VectorLike; maximum: number | VectorLike } | number;
     type: ObjectiveType;
-    allowedTiles: TileType[];
+    tiles: TileType[];
 }
 
 export class Objective {
-    public minimum: number;
-    public maximum: number;
+    public minimum: number | VectorLike;
+    public maximum: number | VectorLike;
     public type: ObjectiveType;
     public allowedTiles: TileType[];
 
@@ -57,7 +68,7 @@ export class Objective {
         }
 
         this.type = config.type;
-        this.allowedTiles = config.allowedTiles;
+        this.allowedTiles = config.tiles;
     }
 }
 

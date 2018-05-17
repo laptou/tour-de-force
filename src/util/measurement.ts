@@ -1,13 +1,17 @@
 import { reverseEnum } from "@util/index.ts";
+
 import { fixed, precision } from "./format";
 import { Vector, VectorLike } from "./math";
 
 const { PI } = Math;
 
+type Numeric = VectorMeasurement | Measurement | VectorLike | number;
+type Scalar = Measurement | number;
+
 export function abs(x: number): number;
 export function abs(x: Measurement): Measurement;
-export function abs(x: number | Measurement): number | Measurement;
-export function abs(x: number | Measurement): number | Measurement {
+export function abs(x: Scalar): Scalar;
+export function abs(x: Scalar): Scalar {
     if (typeof x === "number") return Math.abs(x);
     else return new Measurement(Math.abs(x.value), x.unit);
 }
@@ -282,23 +286,23 @@ export class Measurement implements Number {
         this.unit = unit instanceof Unit ? unit : new Unit([unit]);
     }
 
-    public toString(radix?: number | undefined): string {
+    public toString(radix?: number): string {
         // tslint:disable-next-line:prefer-template
         return `${this.value.toString(radix)} ${this.unit}`;
     }
 
-    public toFixed(fractionDigits?: number | undefined): string {
+    public toFixed(fractionDigits?: number): string {
         // tslint:disable-next-line:prefer-template
         return `${this.value.toFixed(fractionDigits)} ${this.unit}`;
     }
 
-    public toExponential(fractionDigits?: number | undefined): string {
+    public toExponential(fractionDigits?: number): string {
         // tslint:disable-next-line:prefer-template
         return `${this.value.toExponential(fractionDigits)} ${this.unit}`;
     }
 
     // tslint:disable-next-line:no-shadowed-variable
-    public toPrecision(precision?: number | undefined): string {
+    public toPrecision(precision?: number): string {
         // tslint:disable-next-line:prefer-template
         return `${this.value.toPrecision(precision)} ${this.unit}`;
     }
@@ -306,18 +310,18 @@ export class Measurement implements Number {
     public valueOf(): number {
         return this.value;
     }
-    public toLocaleString(locales?: string | string[] | undefined, options?: Intl.NumberFormatOptions | undefined): string {
+    public toLocaleString(locales?: string | string[], options?: Intl.NumberFormatOptions): string {
         throw new Error("Method not implemented.");
     }
 
-    public times(m: Measurement | number) {
+    public times(m: Scalar) {
         if (typeof m === "number")
             return new Measurement(this.value * m, this.unit);
 
         return new Measurement(this.value * m.value, Unit.mult(this.unit, m.unit));
     }
 
-    public over(m: Measurement | number) {
+    public over(m: Scalar) {
         if (typeof m === "number")
             return new Measurement(this.value * m, this.unit);
 
@@ -412,7 +416,7 @@ export class VectorMeasurement extends Vector {
         return new Measurement(super.length(), this.unit);
     }
 
-    public times(v: number | VectorLike | Measurement | VectorMeasurement) {
+    public times(v: Numeric) {
         if (v instanceof Measurement)
             return new VectorMeasurement(super.times(v.value), this.unit.times(v.unit));
         if (v instanceof VectorMeasurement)
@@ -421,7 +425,7 @@ export class VectorMeasurement extends Vector {
         return new VectorMeasurement(super.times(v), this.unit);
     }
 
-    public over(v: number | VectorLike | Measurement | VectorMeasurement) {
+    public over(v: Numeric) {
         if (v instanceof Measurement)
             return new VectorMeasurement(super.over(v.value), this.unit.over(v.unit));
         if (v instanceof VectorMeasurement)

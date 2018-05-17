@@ -3,7 +3,7 @@ import { LevelScene } from "@scene/level";
 import { Tile } from "@scene/level/tile";
 import { ControlAlignment, HudButton, ModeHudButtonConfig } from "@scene/util/ui";
 import { fixed, precision } from "@util/format";
-import { clamp, Ray, Vector } from "@util/math";
+import { Ray, Vector } from "@util/math";
 import {
     Angle,
     AngularVelocity,
@@ -20,6 +20,8 @@ import {
 import { Text } from "../../config";
 
 export class LevelHud extends Phaser.GameObjects.Container {
+    public scene: LevelScene;
+
     private actionInfo!: Phaser.GameObjects.Text;
     private targetInfo!: Phaser.GameObjects.Text;
 
@@ -32,6 +34,7 @@ export class LevelHud extends Phaser.GameObjects.Container {
 
     constructor(scene: LevelScene) {
         super(scene);
+        this.scene = scene;
 
         const cam = scene.cameras.main;
         const { height, width } = cam;
@@ -55,7 +58,7 @@ export class LevelHud extends Phaser.GameObjects.Container {
         this.add(scene.make.text({
             x: 50,
             y: height - 40,
-            text: `Level ${(this.scene.level as LevelData).index + 1}`,
+            text: `Level ${(scene.state.level as LevelData).index + 1}`,
             style: Text.Header
         }));
 
@@ -78,33 +81,38 @@ export class LevelHud extends Phaser.GameObjects.Container {
             style: Text.Normal.Light
         }));
 
+        const modeBtns = {
+            [GameMode.Force]: {
+                frame: 1,
+                text: "F",
+                tooltip: "Force Mode"
+            },
+            [GameMode.Velocity]: {
+                frame: 5,
+                text: "V",
+                tooltip: "Velocity Mode"
+            },
+            [GameMode.Mass]: {
+                frame: 3,
+                text: "M",
+                tooltip: "Mass Mode"
+            }
+        };
+
         // mode buttons
-        this.add(this.makeModeHudButton({
-            sprite: "controls",
-            frame: 1,
-            offset: { x: 100, y: 40 },
-            text: "F",
-            tooltip: "Force Mode",
-            mode: GameMode.Force
-        }).setName(GameMode.Force));
+        let x = 50;
+        for (const mode of scene.state.modes) {
+            const btn = this.makeModeHudButton(scene, {
+                sprite: "controls",
+                offset: { x, y: 40 },
+                mode,
+                ...modeBtns[mode]
+            });
 
-        this.add(this.makeModeHudButton({
-            sprite: "controls",
-            frame: 5,
-            offset: { x: 150, y: 40 },
-            text: "V",
-            tooltip: "Velocity Mode",
-            mode: GameMode.Velocity
-        }).setName(GameMode.Velocity));
+            this.add(btn);
 
-        this.add(this.makeModeHudButton({
-            sprite: "controls",
-            frame: 3,
-            offset: { x: 200, y: 40 },
-            text: "M",
-            tooltip: "Mass Mode",
-            mode: GameMode.Mass
-        }).setName(GameMode.Mass));
+            x += 50;
+        }
 
         // events 
         scene.input.on("pointermove", this.onPointerMove, this);
@@ -112,27 +120,12 @@ export class LevelHud extends Phaser.GameObjects.Container {
         scene.events.on("tiledown", this.onTileDown, this);
     }
 
-    public get scene(): LevelScene {
-        return super.scene as LevelScene;
-    }
-
     public update() {
-        super.update();
-
         const cam = this.scene.cameras.main;
         const { height, width } = cam;
         const gameWidth = (this.scene.level as LevelData).size * 32;
 
         const target = this.scene.state.target;
-
-        // update camera
-        if (this.scene.state.track) {
-            cam.scrollX = this.scene.state.track.x - width / 2;
-        }
-
-        const clampedX = clamp(-50, cam.scrollX, gameWidth + 50 - width);
-
-        this.setPosition(clampedX, cam.scrollY);
 
         if (target) {
             const body = target.body as Matter.Body;
@@ -165,8 +158,8 @@ export class LevelHud extends Phaser.GameObjects.Container {
             const { source, direction: mag } = this.ray;
             const offset = Vector.div(mag, 2);
 
-            this.labels.ray.x.setPosition(clampedX + source.x + offset.x, source.y);
-            this.labels.ray.y.setPosition(clampedX + source.x + mag.x, source.y + offset.y);
+            this.labels.ray.x.setPosition(source.x + offset.x, source.y);
+            this.labels.ray.y.setPosition(source.x + mag.x, source.y + offset.y);
         }
 
         // update overlays if necessary
@@ -261,8 +254,11 @@ export class LevelHud extends Phaser.GameObjects.Container {
 
         const label = {
             x, y,
-            style: { fontWeight: "bold", ...Text.Normal.Dark },
-            backgroundColor: "black",
+            style: {
+                fontWeight: "bold",
+                backgroundColor: "#111111",
+                ...Text.Normal.Dark,
+            },
             origin: 0.5,
             padding: 5,
             alpha: 0
@@ -398,17 +394,17 @@ export class LevelHud extends Phaser.GameObjects.Container {
         }
     }
 
-    private makeModeHudButton(config: ModeHudButtonConfig) {
+    private makeModeHudButton(scene: LevelScene, config: ModeHudButtonConfig) {
         const c = {
             align: ControlAlignment.Right | ControlAlignment.Bottom,
             grey: true,
             ...config
         };
 
-        const btn = new HudButton(this.scene, c);
+        const btn = new HudButton(scene, c);
 
         if (c.grey) {
-            if (this.scene.state.mode !== c.mode)
+            if (scene.state.mode !== c.mode)
                 btn.sprite.setPipeline("greyscale");
 
             btn.on("pointerover", () => {
@@ -424,7 +420,7 @@ export class LevelHud extends Phaser.GameObjects.Container {
                     btn.sprite.setPipeline("greyscale");
             });
 
-            this.scene.state.on("update:mode", () => {
+            scene.state.on("update:mode", () => {
                 if (c.mode !== this.scene.state.mode) btn.sprite.setPipeline("greyscale");
                 else btn.sprite.resetPipeline();
             });

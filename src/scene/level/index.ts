@@ -1,7 +1,8 @@
-import { GameMode, LevelData } from "@lib/level";
+import { LevelData } from "@lib/level";
+import { Goal } from "@scene/level/goal";
 import { LevelHud } from "@scene/level/hud";
 import { LevelState } from "@scene/level/state";
-import { HudButton } from "@scene/util/ui";
+import { clamp } from "@util/math";
 import * as Phaser from "phaser";
 
 import { Tile } from "./tile";
@@ -64,11 +65,10 @@ export class LevelScene extends Phaser.Scene {
         this.state = new LevelState();
 
         this.createWorld();
+        this.loadWorld();
 
         this.hud = new LevelHud(this);
         this.add.existing(this.hud);
-
-        this.loadWorld();
     }
 
     public update(total: number, delta: number) {
@@ -81,6 +81,11 @@ export class LevelScene extends Phaser.Scene {
         if (this.state.track) {
             cam.scrollX = this.state.track.x - width / 2;
         }
+
+        const clampedX = clamp(-50, cam.scrollX, gameWidth + 50 - width);
+
+        this.hud.setPosition(clampedX, cam.scrollY);
+        this.hud.update();
     }
 
     private createWorld() {
@@ -120,25 +125,26 @@ export class LevelScene extends Phaser.Scene {
     private loadWorld() {
         if (typeof this.level === "number") return;
 
-        for (const mode of [GameMode.Mass, GameMode.Velocity, GameMode.Force]) {
-            if (this.level.modes.indexOf(mode) === -1) {
-                const btn = this.hud.getByName(mode) as HudButton;
-                btn.setVisible(false);
-                btn.setActive(false);
-            }
-        }
+        this.state.modes = this.level.modes;
+        this.state.level = this.level;
 
-        for (const config of this.level.content) {
-            const tile = new Tile(this, config);
+        for (const data of this.level.tiles) {
+            const tile = new Tile(this, data);
 
             tile.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
                 this.events.emit("tiledown", pointer, tile);
             });
 
-            if (config.track)
+            if (data.track)
                 this.state.track = tile;
 
             this.tiles.add(tile);
+        }
+
+        for (const data of this.level.goals) {
+            const goal = new Goal(this, data);
+
+            this.tiles.add(goal);
         }
     }
 }

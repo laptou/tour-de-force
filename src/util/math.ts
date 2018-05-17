@@ -9,7 +9,7 @@ export function clamp(min: number, x: number, max: number) {
     return Math.min(Math.max(x, min), max);
 }
 
-export type VectorLike = { x: number; y: number };
+export interface VectorLike { x: number; y: number }
 
 // tslint:disable:no-use-before-declare
 export class Vector {
@@ -43,8 +43,7 @@ export class Vector {
         return new Vector(a.x + b.x, a.y + b.y);
     }
 
-
-    public static unit(v: VectorLike): Vector {
+    public static normalize(v: VectorLike): Vector {
         const l = Vector.len(v);
         return new Vector(v.x / l, v.y / l);
     }
@@ -65,11 +64,15 @@ export class Vector {
     }
 
     public length() { return Vector.len(this); }
+    public normalized() { return Vector.normalize(this); }
+
     public plus(v: VectorLike) { return Vector.add(this, v); }
     public minus(v: VectorLike) { return Vector.sub(this, v); }
     public times(v: number | VectorLike) { return Vector.mult(this, v); }
     public over(v: number | VectorLike) { return Vector.div(this, v); }
+
     public dot(v: VectorLike) { return Vector.dot(this, v); }
+
     public ray() { return new Ray(Vector.zero, this); }
 
     public toString() { return `⟨${this.x}, ${this.y}⟩`; }
@@ -97,10 +100,9 @@ export class Ray {
     get angle() { return Math.atan2(this.direction.y, this.direction.x); }
     get unit() { return new Ray(this.source, Vector.div(this.direction, this.length)); }
 
-
     public plus(x: number | VectorLike) {
         if (typeof x === "number")
-            return new Ray(this.source, Vector.add(this.direction, Vector.unit(this.direction).times(x)));
+            return new Ray(this.source, Vector.add(this.direction, Vector.normalize(this.direction).times(x)));
         return new Ray(this.source, Vector.add(this.direction, x));
     }
 
@@ -109,5 +111,29 @@ export class Ray {
     }
 }
 
+export interface SizeLike { width: number; height: number; }
 
+export class Size {
+    public width: number;
+    public height: number;
+
+    public static from(v: VectorLike) {
+        return new Size(v.x, v.y);
+    }
+
+    public constructor(size: SizeLike);
+    public constructor(dimension: number);
+    public constructor(width: number, height: number);
+    public constructor(width: number | SizeLike, height?: number) {
+        if (typeof width === "number") {
+            this.width = width;
+            this.height = typeof height === "number" ? height : width;
+        } else {
+            this.width = width.width;
+            this.height = width.height;
+        }
+    }
+
+
+}
 
