@@ -72,7 +72,7 @@ module.exports = {
             "@shader": path.join(__dirname, "src/shader"),
             "@control": path.join(__dirname, "src/control"),
             "@scene": path.join(__dirname, "src/scene"),
-            "@util": path.join(__dirname, "src/util.ts"),
+            "@util": path.join(__dirname, "src/util"),
         }
     }
 };

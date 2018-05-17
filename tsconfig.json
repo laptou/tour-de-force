@@ -18,8 +18,8 @@
             "@lib/*": [
                 "src/lib/*"
             ],
-            "@util": [
-                "src/util.ts"
+            "@util/*": [
+                "src/util/*"
             ],
             "@control/*": [
                 "src/control/*"

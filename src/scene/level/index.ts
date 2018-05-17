@@ -1,10 +1,22 @@
 import { GameMode, LevelData } from "@lib/level";
-import { clamp, fixed, precision, Ray, units, vector } from "@util";
+import { ControlAlignment, HudButton, HudButtonConfig, ModeHudButtonConfig } from "@scene/util/ui";
+import { clamp, fixed, precision, Ray, Vector } from "@util/math";
+import {
+    Angle,
+    AngularVelocity,
+    Distance,
+    Force,
+    Mass,
+    Measurement,
+    Time,
+    Unit,
+    VectorMeasurement,
+    Velocity,
+} from "@util/measurement";
 import * as Phaser from "phaser";
 
 import { Text } from "../../config";
 import { Tile, TileConfig } from "./tile";
-import { ControlAlignment, HudButton, HudButtonConfig, ModeHudButtonConfig } from "./ui";
 
 const { sin, cos, random, PI, max, min, abs } = Math;
 
@@ -124,8 +136,8 @@ export class LevelScene extends Phaser.Scene {
                             // velocity is in pixels per timestep (1/60s)
                             // so all other units need to be divided accordingly
 
-                            const time = new units.Measurement(1 / 60, units.Time.Second);
-                            const mass = new units.Measurement(body.mass, units.Mass.Kilogram);
+                            const time = new Measurement(1 / 60, Time.Second);
+                            const mass = new Measurement(body.mass, Mass.Kilogram);
                             const force = this.queryRay().magnitude();
 
                             const accel = force.over(mass);
@@ -144,7 +156,7 @@ export class LevelScene extends Phaser.Scene {
 
                         {
 
-                            const mass = new units.Measurement(body.mass, units.Mass.Kilogram);
+                            const mass = new Measurement(body.mass, Mass.Kilogram);
                             const velo = this.queryRay().magnitude();
 
                             const momentum = precision(3) `m (${mass}) * v (${velo}) = ρ (${velo.times(mass)})`;
@@ -169,8 +181,8 @@ export class LevelScene extends Phaser.Scene {
 
                 const point = this.ray.plus(10).end;
                 const dir = this.ray.unit.times(10).direction;
-                const p1 = vector.add(this.ray.end, { x: dir.y, y: -dir.x });
-                const p2 = vector.add(this.ray.end, { x: -dir.y, y: dir.x });
+                const p1 = Vector.add(this.ray.end, { x: dir.y, y: -dir.x });
+                const p2 = Vector.add(this.ray.end, { x: -dir.y, y: dir.x });
 
                 this.overlays.fillStyle(color, 1);
                 this.overlays.fillTriangle(
@@ -192,22 +204,24 @@ export class LevelScene extends Phaser.Scene {
 
             this.targetInfo.setBackgroundColor("#FFFFFF");
 
-            const m = new units.Measurement(body.mass, units.Mass.Kilogram);
+            const m = new Measurement(body.mass, Mass.Kilogram);
 
             // 100px = 1m
             const x =
-                new units.VectorMeasurement(this.target, units.Distance.Pixel)
-                    .to(units.Distance.Meter);
+                new VectorMeasurement(this.target, Distance.Pixel)
+                    .to(Distance.Meter);
 
             const v =
-                new units.VectorMeasurement(body.velocity, units.pixelsPerStep)
-                    .to(units.Distance.Meter, units.Time.Second);
+                new VectorMeasurement(body.velocity, Velocity.PixelsPerStep)
+                    .to(Velocity.MetersPerSecond);
 
-            const theta = new units.Measurement(this.target.angle, units.Angle.Degree);
+            const theta =
+                new Measurement(this.target.angle, Angle.Degree)
+                    .to(Angle.Radian);
 
             const omega =
-                new units.Measurement(body.angularVelocity, new units.Unit(units.Angle.Degree, units.Time.Step))
-                    .to(units.Angle.Degree, units.Time.Second);
+                new Measurement(body.angularVelocity, AngularVelocity.DegreesPerStep)
+                    .to(AngularVelocity.RadiansPerSecond);
 
             this.targetInfo.setText([
                 fixed(1) `m: ${m}`,
@@ -220,7 +234,7 @@ export class LevelScene extends Phaser.Scene {
 
         if (this.ray && this.labels.ray) {
             const { source, direction: mag } = this.ray;
-            const offset = vector.div(mag, 2);
+            const offset = Vector.div(mag, 2);
 
             this.labels.ray.x.setPosition(clampedX + source.x + offset.x, source.y);
             this.labels.ray.y.setPosition(clampedX + source.x + mag.x, source.y + offset.y);
@@ -247,7 +261,7 @@ export class LevelScene extends Phaser.Scene {
         this.grid = this.add.tileSprite(gameWidth / 2, height / 2, gameWidth, gameHeight, "tile-level");
         this.grid.flipY = true;
 
-        this.matter.world.setBounds(50, 50, gameWidth - 100, gameHeight, 512);
+        this.matter.world.setBounds(0, 50, gameWidth, gameHeight, 512);
         const walls = this.matter.world.walls as { left: Matter.Body; right: Matter.Body; top: Matter.Body; bottom: Matter.Body };
 
         walls.top.friction = 0;
@@ -364,7 +378,7 @@ export class LevelScene extends Phaser.Scene {
     private createRay(x: number, y: number) {
         this.ray = new Ray({ x, y }, { x: 0, y: 0 });
         this.labels.ray = {
-            x: this.add.text(x, y, `${new units.Measurement(0, units.Force.Newton)}`,
+            x: this.add.text(x, y, `${new Measurement(0, Force.Newton)}`,
                 {
                     style: { fontWeight: "bold", ...Text.Normal.Dark },
                     backgroundColor: "#000000",
@@ -372,7 +386,7 @@ export class LevelScene extends Phaser.Scene {
                     padding: 5,
                     alpha: 0
                 }).setOrigin(0.5) as Phaser.GameObjects.Text,
-            y: this.add.text(x, y, `${new units.Measurement(0, units.Force.Newton)}`,
+            y: this.add.text(x, y, `${new Measurement(0, Force.Newton)}`,
                 {
                     style: { fontWeight: "bold", ...Text.Normal.Dark },
                     backgroundColor: "black",
@@ -385,47 +399,47 @@ export class LevelScene extends Phaser.Scene {
         this.dirty = true;
     }
 
-    private queryRay(): units.VectorMeasurement {
+    private queryRay(): VectorMeasurement {
         if (!this.ray)
-            return units.VectorMeasurement.zero;
+            return VectorMeasurement.zero;
 
-        let unit: units.Unit = units.scalar;
+        let unit: Unit = Unit.scalar;
         let factor = 1;
 
         switch (this.mode) {
             case GameMode.Force:
-                unit = new units.Unit(units.Force.Newton);
+                unit = new Unit(Force.Newton);
                 factor = 100; // for display, arrow units are 100 * N
                 break;
             case GameMode.Velocity:
-                unit = units.metersPerSecond;
+                unit = Velocity.MetersPerSecond;
                 factor = 1 / 30; // max 10 m/s
                 break;
         }
 
-        return new units.VectorMeasurement(vector.mult(this.ray.direction, factor), unit);
+        return new VectorMeasurement(Vector.mult(this.ray.direction, factor), unit);
     }
 
     private updateRay(x: number, y: number) {
         if (this.ray) {
-            let d = vector.sub({ x, y }, this.ray.source);
+            let d = Vector.sub({ x, y }, this.ray.source);
             let dlen = d.length();
             d = d.times(Math.min(1, 300 / dlen));
 
             this.ray.direction = d;
 
             if (this.labels.ray) {
-                const offset = vector.div(d, 2);
+                const offset = Vector.div(d, 2);
                 const source = this.ray.source;
                 const alpha = Math.min(1, dlen / 50);
                 const camera = this.cameras.main;
 
                 const vec = this.queryRay();
 
-                this.labels.ray.x.setText(new units.Measurement(vec.x, vec.unit).toPrecision(3));
+                this.labels.ray.x.setText(new Measurement(vec.x, vec.unit).toPrecision(3));
                 this.labels.ray.x.setAlpha(alpha);
 
-                this.labels.ray.y.setText(new units.Measurement(vec.y, vec.unit).toPrecision(3));
+                this.labels.ray.y.setText(new Measurement(vec.y, vec.unit).toPrecision(3));
                 this.labels.ray.y.setAlpha(alpha);
             }
 
@@ -437,13 +451,13 @@ export class LevelScene extends Phaser.Scene {
         if (this.ray && this.target) {
             const body = this.target as any as Phaser.Physics.Matter.Components.Force & Phaser.Physics.Matter.Components.Velocity;
 
-            const s = new units.VectorMeasurement(this.ray.source, units.Distance.Meter);
+            const s = new VectorMeasurement(this.ray.source, Distance.Meter);
             const d = this.ray.direction;
 
             switch (this.mode) {
                 case GameMode.Force:
                     // gonna treat the arrow length as 100 * matter-newton   
-                    let force = new units.VectorMeasurement(vector.div(d, 100), units.pixelNewton);
+                    let force = new VectorMeasurement(Vector.div(d, 100), Force.PixelNewton);
 
                     // maximum 3 matter-newton = 300 N
                     force = force.times(Math.min(1, 3 / force.length()));
@@ -460,12 +474,12 @@ export class LevelScene extends Phaser.Scene {
                     break;
                 case GameMode.Velocity:
                     // gonna treat the arrow length as 30 * m / s
-                    let velocity = new units.VectorMeasurement(vector.div(d, 30), units.metersPerSecond);
+                    let velocity = new VectorMeasurement(Vector.div(d, 30), Velocity.MetersPerSecond);
 
                     // maximum 10 m/s
                     velocity = velocity.times(Math.min(1, 10 / velocity.length()));
 
-                    velocity = velocity.to(units.pixelsPerStep);
+                    velocity = velocity.to(Velocity.PixelsPerStep);
 
                     body.setVelocity(velocity.x, velocity.y);
                     break;
