@@ -68,6 +68,7 @@ module.exports = {
         extensions: [".ts", ".js", ".glsl", ".json"],
         alias: {
             "@res": path.join(__dirname, "src/res"),
+            "@lib": path.join(__dirname, "src/lib"),
             "@shader": path.join(__dirname, "src/shader"),
             "@control": path.join(__dirname, "src/control"),
             "@scene": path.join(__dirname, "src/scene"),

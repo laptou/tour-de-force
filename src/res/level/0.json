@@ -1,5 +1,9 @@
 {
+    "index": 0,
     "size": 320,
+    "modes": [
+        "force"
+    ],
     "content": [
         {
             "x": 20,

@@ -1,6 +1,5 @@
-export enum TileType {
-    Wood = "wood", Steel = "steel", Aluminum = "aluminum"
-}
+import { TileType } from "@lib/level";
+
 
 export interface TileConfig {
     x: number;

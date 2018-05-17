@@ -1,12 +1,8 @@
 import { Button } from "@control/button";
+import { GameMode } from "@lib/level";
 import { Scene } from "phaser";
 
-export enum GameMode {
-    View,
-    Force,
-    Velocity,
-    Mass,
-}
+
 
 export enum ControlAlignment {
     Left = 1,

@@ -1,16 +1,16 @@
+import { GameMode, LevelData } from "@lib/level";
 import { clamp, fixed, precision, Ray, units, vector } from "@util";
 import * as Phaser from "phaser";
 
 import { Text } from "../../config";
 import { Tile, TileConfig } from "./tile";
-import { ControlAlignment, GameMode, HudButton, HudButtonConfig, ModeHudButtonConfig } from "./ui";
+import { ControlAlignment, HudButton, HudButtonConfig, ModeHudButtonConfig } from "./ui";
 
 const { sin, cos, random, PI, max, min, abs } = Math;
 
 export class LevelScene extends Phaser.Scene {
 
-    private level: any;
-    private levelIndex!: number;
+    private level!: LevelData | number;
 
     private scale = 100; // 100px = 1m
     private pan = { x: 0, y: 0 };
@@ -39,7 +39,7 @@ export class LevelScene extends Phaser.Scene {
     public init(data: any) {
         console.log('init', data);
 
-        this.levelIndex = data.level;
+        this.level = data.level;
     }
 
     public preload() {
@@ -78,6 +78,8 @@ export class LevelScene extends Phaser.Scene {
 
         this.createHUD();
 
+        this.loadWorld();
+
         this.input.on("pointermove", this.onPointerMove, this);
         this.input.on("pointerup", this.onPointerUp, this);
 
@@ -87,7 +89,7 @@ export class LevelScene extends Phaser.Scene {
     public update(total: number, delta: number) {
         const cam = this.cameras.main;
         const { height, width } = cam;
-        const gameWidth = this.level.size * 32;
+        const gameWidth = (this.level as LevelData).size * 32;
 
         // update camera
 
@@ -143,10 +145,9 @@ export class LevelScene extends Phaser.Scene {
                         {
 
                             const mass = new units.Measurement(body.mass, units.Mass.Kilogram);
-                            const velo = new units.VectorMeasurement(this.ray.direction, units.metersPerSecond);
+                            const velo = this.queryRay().magnitude();
 
-                            // const momentum = precision(3) `F (${force}) × Δt (1/60 s) = Δρ (${impulse})`;
-                            const momentum = precision(3) `m (${mass}) * v (${velo}) = ρ (${mass.times(velo.magnitude())})`;
+                            const momentum = precision(3) `m (${mass}) * v (${velo}) = ρ (${velo.times(mass)})`;
 
                             info = [momentum].join("\n");
                         }
@@ -236,7 +237,7 @@ export class LevelScene extends Phaser.Scene {
         const { height, width } = cam;
 
         // load the level
-        this.level = require(`@res/level/${0}.json`);
+        this.level = require(`@res/level/${0}.json`) as LevelData;
 
         // set up camera and physics
         const gameWidth = this.level.size * 32, gameHeight = height - 100;
@@ -263,17 +264,6 @@ export class LevelScene extends Phaser.Scene {
 
         // add the tiles
         this.tileContainer = this.make.container({});
-
-        for (const config of this.level.content) {
-            const tile = this.addTile(config as TileConfig);
-
-            if (config.track)
-                this.track = tile;
-
-            this.tileContainer.add(tile);
-        }
-
-
     }
 
     private createHUD() {
@@ -298,7 +288,7 @@ export class LevelScene extends Phaser.Scene {
         this.hud.add(this.make.text({
             x: 50,
             y: height - 40,
-            text: `Level ${(this.levelIndex || 0) + 1}`,
+            text: `Level ${(this.level as LevelData).index + 1}`,
             style: Text.Header
         }));
 
@@ -329,7 +319,7 @@ export class LevelScene extends Phaser.Scene {
             text: "F",
             tooltip: "Force Mode",
             mode: GameMode.Force
-        }));
+        }).setName(GameMode.Force));
 
         this.hud.add(this.makeModeHudButton({
             sprite: "controls",
@@ -338,7 +328,7 @@ export class LevelScene extends Phaser.Scene {
             text: "V",
             tooltip: "Velocity Mode",
             mode: GameMode.Velocity
-        }));
+        }).setName(GameMode.Velocity));
 
         this.hud.add(this.makeModeHudButton({
             sprite: "controls",
@@ -347,7 +337,28 @@ export class LevelScene extends Phaser.Scene {
             text: "M",
             tooltip: "Mass Mode",
             mode: GameMode.Mass
-        }));
+        }).setName(GameMode.Mass));
+    }
+
+    private loadWorld() {
+        if (typeof this.level === "number") return;
+
+        for (const mode of [GameMode.Mass, GameMode.Velocity, GameMode.Force]) {
+            if (this.level.modes.indexOf(mode) === -1) {
+                const btn = this.hud.getByName(mode) as HudButton;
+                btn.setVisible(false);
+                btn.setActive(false);
+            }
+        }
+
+        for (const config of this.level.content) {
+            const tile = this.addTile(config as TileConfig);
+
+            if (config.track)
+                this.track = tile;
+
+            this.tileContainer.add(tile);
+        }
     }
 
     private createRay(x: number, y: number) {

@@ -15,6 +15,9 @@
             "@scene/*": [
                 "src/scene/*"
             ],
+            "@lib/*": [
+                "src/lib/*"
+            ],
             "@util": [
                 "src/util.ts"
             ],
