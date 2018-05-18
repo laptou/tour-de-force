@@ -1,6 +1,8 @@
 import { GoalData, Objective, ObjectiveType } from "@lib/level";
 import { Tile } from "@scene/level/tile";
 import { Vector, VectorLike } from "@util/math";
+import { Mass, Measurement, VectorMeasurement, Velocity } from "@util/measurement";
+
 
 export class Goal extends Phaser.GameObjects.Container {
     public objectives: Objective[];
@@ -65,15 +67,35 @@ export class Goal extends Phaser.GameObjects.Container {
         return this.objectives.every(o => {
             const bounds = (this.body as Matter.Body).bounds as { min: VectorLike, max: VectorLike };
             const epsilon = 1; // these are pixels, so ε = 1 is fine
+            const within = body.vertices.every(v =>
+                v.x <= bounds.max.x + epsilon && bounds.min.x <= v.x + epsilon &&
+                v.y <= bounds.max.y + epsilon && bounds.min.y <= v.y + epsilon);
 
             switch (o.type) {
                 case ObjectiveType.Position:
-                    return body.vertices.every(v =>
-                        v.x <= bounds.max.x + epsilon && bounds.min.x <= v.x + epsilon &&
-                        v.y <= bounds.max.y + epsilon && bounds.min.y <= v.y + epsilon);
-                default:
-                    return false;
+                    return within;
+                case ObjectiveType.Velocity:
+                    if (within) {
+                        const velocity =
+                            new VectorMeasurement(body.velocity, Velocity.PixelsPerStep)
+                                .to(Velocity.MetersPerSecond);
+
+                        return Vector.gt(o.minimum, velocity) && Vector.lt(o.maximum, velocity);
+                    }
+                    break;
+                case ObjectiveType.Momentum:
+                    if (within) {
+                        const velocity =
+                            new VectorMeasurement(body.velocity, Velocity.PixelsPerStep)
+                                .to(Velocity.MetersPerSecond);
+                        const momentum = velocity.times(new Measurement(body.mass, Mass.Kilogram));
+
+                        return Vector.gt(o.minimum, momentum) && Vector.lt(o.maximum, momentum);
+                    }
+                    break;
             }
+
+            return false;
         });
     }
 

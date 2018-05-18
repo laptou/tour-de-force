@@ -1,4 +1,3 @@
-
 const { pow, sqrt, hypot } = Math;
 
 export function square(n: number) {
@@ -13,7 +12,26 @@ export interface VectorLike { x: number; y: number }
 
 // tslint:disable:no-use-before-declare
 export class Vector {
+
     public static zero = new Vector(0, 0);
+
+    /**
+     * Returns a < b.
+     */
+    public static gt(a: number | VectorLike, b: VectorLike): boolean {
+        if (typeof a === "number") return a < Vector.len(b);
+
+        return a.x < b.x && a.y < b.y;
+    }
+
+    /**
+     * Returns a > b.
+     */
+    public static lt(a: number | VectorLike, b: VectorLike): boolean {
+        if (typeof a === "number") return a > Vector.len(b);
+
+        return a.x > b.x && a.y > b.y;
+    }
 
     public static lensq(v: VectorLike): number {
         return Vector.dot(v, v);
