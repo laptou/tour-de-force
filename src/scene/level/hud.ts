@@ -101,18 +101,20 @@ export class LevelHud extends Phaser.GameObjects.Container {
         };
 
         // mode buttons
-        let x = 50;
-        for (const mode of scene.state.modes) {
+        let x = scene.padding.width;
+        for (const mode in scene.state.modes) {
+            if (!scene.state.modes.hasOwnProperty(mode)) continue;
+
             const btn = this.makeModeHudButton(scene, {
                 sprite: "controls",
-                offset: { x, y: py - 40 },
+                offset: { x, y: py - 32 },
                 mode,
                 ...modeBtns[mode]
             });
 
             this.add(btn);
 
-            x += 50;
+            x += 48;
         }
 
         // events 
@@ -405,6 +407,9 @@ export class LevelHud extends Phaser.GameObjects.Container {
         };
 
         const btn = new HudButton(scene, c);
+
+        // tslint:disable-next-line:prefer-template
+        btn.setName("mode:" + config.mode);
 
         if (c.grey) {
             if (scene.state.mode !== c.mode)

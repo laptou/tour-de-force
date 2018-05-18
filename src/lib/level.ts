@@ -37,7 +37,8 @@ export interface LevelData {
     index: number;
     width: number;
     height: number;
-    modes: GameMode[];
+    time: number;
+    modes: { [mode: string]: number };
     tiles: TileData[];
     goals: GoalData[];
 }
