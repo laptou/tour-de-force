@@ -217,7 +217,8 @@ export class LevelScene extends Phaser.Scene {
     }
 
     private levelCompleted() {
-        // level completed!
+        this.state.completed = true;
+
         this.banner = new LevelBanner(this, LevelBannerType.Success);
         this.add.existing(this.banner);
 
@@ -226,11 +227,11 @@ export class LevelScene extends Phaser.Scene {
         this.banner.setPosition(scrollX + width / 2, scrollY + height / 2);
         this.banner.begin();
 
-        // this.scene.transition({
-        //     target: "level-select",
-        //     duration: 2000,
-        //     onUpdate: this.ontransitionupdate
-        // });
+        this.scene.transition({
+            target: "level-select",
+            duration: 2000,
+            onUpdate: this.ontransitionupdate
+        });
     }
 
     private ontransitionupdate(progress: number) {

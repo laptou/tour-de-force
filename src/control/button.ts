@@ -2,8 +2,8 @@ import { Tooltip } from "@control/tooltip";
 
 export class Button extends Phaser.GameObjects.Container {
 
-    public tooltip: Phaser.GameObjects.Container | undefined;
-    public text: Phaser.GameObjects.Text | undefined;
+    public tooltip?: Phaser.GameObjects.Container;
+    public text?: Phaser.GameObjects.Text;
     public sprite: Phaser.GameObjects.Sprite;
 
     constructor(scene: Phaser.Scene, config: any) {
@@ -37,6 +37,12 @@ export class Button extends Phaser.GameObjects.Container {
         this.sprite.on("pointerout", this.pointerout, this);
         this.sprite.on("pointerdown", this.pointerdown, this);
         this.sprite.on("pointerup", this.pointerup, this);
+    }
+
+    public setText(text: string | string[]) {
+        if (this.text) {
+            this.text.setText(text);
+        }
     }
 
     private pointerover(pointer: Phaser.Input.Pointer) {

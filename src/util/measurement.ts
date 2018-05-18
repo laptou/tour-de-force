@@ -1,11 +1,10 @@
 import { reverseEnum } from "@util/index.ts";
 
-import { fixed, precision } from "./format";
 import { Vector, VectorLike } from "./math";
 
-const { PI } = Math;
+const { PI, pow } = Math;
 
-type Numeric = VectorMeasurement | Measurement | VectorLike | number;
+type Numeric = VectorMeasurement | Measurement | Vector | number;
 type Scalar = Measurement | number;
 
 export function abs(x: number): number;
@@ -14,6 +13,35 @@ export function abs(x: Scalar): Scalar;
 export function abs(x: Scalar): Scalar {
     if (typeof x === "number") return Math.abs(x);
     else return new Measurement(Math.abs(x.value), x.unit);
+}
+
+export function precision(p?: number) {
+    return (tags: TemplateStringsArray, ...keys: Numeric[]) => {
+        let str = tags[0];
+        for (let i = 1; i < tags.length; i++) {
+            str += keys[i - 1].toPrecision(p);
+            str += tags[i];
+        }
+
+        return str;
+    }
+}
+
+export function fixed(p?: number) {
+    return (tags: TemplateStringsArray, ...keys: Numeric[]) => {
+        let str = tags[0];
+        for (let i = 1; i < tags.length; i++) {
+            let num = keys[i - 1];
+
+            if (!(num instanceof Vector) && typeof p === "number" && abs(num).valueOf() < pow(10, -p))
+                num = abs(num); // fixes -0.0
+
+            str += num.toFixed(p);
+            str += tags[i];
+        }
+
+        return str;
+    }
 }
 
 export enum Distance {
@@ -416,7 +444,7 @@ export class VectorMeasurement extends Vector {
         return new Measurement(super.length(), this.unit);
     }
 
-    public times(v: Numeric) {
+    public times(v: Numeric | VectorLike) {
         if (v instanceof Measurement)
             return new VectorMeasurement(super.times(v.value), this.unit.times(v.unit));
         if (v instanceof VectorMeasurement)
@@ -425,7 +453,7 @@ export class VectorMeasurement extends Vector {
         return new VectorMeasurement(super.times(v), this.unit);
     }
 
-    public over(v: Numeric) {
+    public over(v: Numeric | VectorLike) {
         if (v instanceof Measurement)
             return new VectorMeasurement(super.over(v.value), this.unit.over(v.unit));
         if (v instanceof VectorMeasurement)

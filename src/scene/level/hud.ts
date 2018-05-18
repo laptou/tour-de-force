@@ -2,15 +2,16 @@ import { GameMode, LevelData } from "@lib/level";
 import { LevelScene } from "@scene/level";
 import { Tile } from "@scene/level/tile";
 import { ControlAlignment, HudButton, ModeHudButtonConfig } from "@scene/util/ui";
-import { fixed, precision } from "@util/format";
 import { clamp, Ray, Vector } from "@util/math";
 import {
     Angle,
     AngularVelocity,
     Distance,
+    fixed,
     Force,
     Mass,
     Measurement,
+    precision,
     Time,
     Unit,
     VectorMeasurement,
@@ -20,6 +21,24 @@ import {
 import { Text } from "../../config";
 
 const { min, max } = Math;
+
+const modeBtns = {
+    [GameMode.Force]: {
+        frame: 1,
+        text: "F",
+        tooltip: "Force Mode"
+    },
+    [GameMode.Velocity]: {
+        frame: 5,
+        text: "V",
+        tooltip: "Velocity Mode"
+    },
+    [GameMode.Mass]: {
+        frame: 3,
+        text: "M",
+        tooltip: "Mass Mode"
+    }
+};
 
 export class LevelHud extends Phaser.GameObjects.Container {
     public scene: LevelScene;
@@ -85,24 +104,6 @@ export class LevelHud extends Phaser.GameObjects.Container {
             padding: 10,
             style: Text.Normal.Light
         }));
-
-        const modeBtns = {
-            [GameMode.Force]: {
-                frame: 1,
-                text: "F",
-                tooltip: "Force Mode"
-            },
-            [GameMode.Velocity]: {
-                frame: 5,
-                text: "V",
-                tooltip: "Velocity Mode"
-            },
-            [GameMode.Mass]: {
-                frame: 3,
-                text: "M",
-                tooltip: "Mass Mode"
-            }
-        };
 
         // mode buttons
         let x = scene.padding.width + 24;
@@ -263,6 +264,10 @@ export class LevelHud extends Phaser.GameObjects.Container {
     }
 
     private createRay(x: number, y: number) {
+        if (this.scene.state.modes[this.mode] <= 0) return;
+
+        if (this.scene.state.completed) return;
+
         this.ray = new Ray({ x, y }, { x: 0, y: 0 });
 
         const label = {
@@ -364,6 +369,7 @@ export class LevelHud extends Phaser.GameObjects.Container {
                         new Phaser.Math.Vector2(force.x, force.y)
                     );
 
+
                     break;
                 case GameMode.Velocity:
                     // gonna treat the arrow length as 30 * m / s
@@ -377,6 +383,12 @@ export class LevelHud extends Phaser.GameObjects.Container {
                     body.setVelocity(velocity.x, velocity.y);
                     break;
             }
+
+            this.scene.state.modes[this.mode]--;
+
+            // tslint:disable-next-line:prefer-template
+            const button = this.getByName("mode:" + this.mode) as HudButton;
+            button.setText(this.scene.state.modes[this.mode].toString());
         }
     }
 
@@ -423,6 +435,10 @@ export class LevelHud extends Phaser.GameObjects.Container {
         // tslint:disable-next-line:prefer-template
         btn.setName("mode:" + config.mode);
 
+        btn.on("pointerdown", () => {
+            this.scene.state.mode = c.mode;
+        });
+
         if (c.grey) {
             if (scene.state.mode !== c.mode)
                 btn.sprite.setPipeline("greyscale");
@@ -431,18 +447,19 @@ export class LevelHud extends Phaser.GameObjects.Container {
                 btn.sprite.resetPipeline();
             });
 
-            btn.on("pointerdown", () => {
-                this.scene.state.mode = c.mode;
-            });
-
             btn.on("pointerout", () => {
                 if (c.mode !== this.scene.state.mode)
                     btn.sprite.setPipeline("greyscale");
             });
 
             scene.state.on("update:mode", () => {
-                if (c.mode !== this.scene.state.mode) btn.sprite.setPipeline("greyscale");
-                else btn.sprite.resetPipeline();
+                if (c.mode !== this.scene.state.mode) {
+                    btn.sprite.setPipeline("greyscale");
+                    btn.setText(modeBtns[c.mode].text);
+                } else {
+                    btn.setText(this.scene.state.modes[c.mode].toString());
+                    btn.sprite.resetPipeline();
+                }
             });
         }
 

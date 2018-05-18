@@ -10,6 +10,7 @@ export function clamp(min: number, x: number, max: number) {
 
 export interface VectorLike { x: number; y: number }
 
+
 // tslint:disable:no-use-before-declare
 export class Vector {
 

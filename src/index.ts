@@ -1,7 +1,8 @@
+import { LevelScene } from "@scene/level";
+import { LevelSelectScene } from "@scene/select";
+import { TitleScene } from "@scene/title";
 import { GreyscalePipeline } from "@shader/greyscale";
 import * as Phaser from "phaser";
-
-import { LevelScene } from "./scene/level";
 
 class TourDeForceGame extends Phaser.Game {
     constructor() {
@@ -11,7 +12,11 @@ class TourDeForceGame extends Phaser.Game {
             type: Phaser.WEBGL,
             backgroundColor: "#FFFFFF",
             physics: { default: "matter", matter: { gravity: { y: 0.981 } }, debug: true },
-            scene: [/*TitleScene, LevelSelectScene,*/ LevelScene],
+            scene: [
+                TitleScene,
+                LevelSelectScene,
+                LevelScene
+            ],
             // resolution: window.devicePixelRatio,
         });
 

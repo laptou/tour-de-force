@@ -13,4 +13,5 @@ export class LevelState extends EventEmitter {
     public track: Tile | null = null;
     public mode: GameMode = GameMode.Force;
     public modes: { [mode: string]: number; } = {};
+    public completed = false;
 }

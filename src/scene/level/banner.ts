@@ -1,6 +1,8 @@
+import * as Phaser from "phaser";
+
 export enum LevelBannerType {
-    Success,
-    Failure
+    Success = 0,
+    Failure = 1
 }
 
 export class LevelBanner extends Phaser.GameObjects.Container {
@@ -13,7 +15,7 @@ export class LevelBanner extends Phaser.GameObjects.Container {
         this.bannerType = type;
         this.banner = scene.make.image({
             key: "banners",
-            frame: 0,
+            frame: type,
             alpha: 0,
             scale: 0
         });

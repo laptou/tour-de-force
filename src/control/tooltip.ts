@@ -1,3 +1,6 @@
+import * as Phaser from "phaser";
+
+
 export class Tooltip extends Phaser.GameObjects.Container {
     private text: Phaser.GameObjects.Text;
     private graphics: Phaser.GameObjects.Graphics;

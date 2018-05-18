@@ -29,6 +29,3 @@ export function reverseEnum(type: any) {
         }
     }
 }
-
-
-
