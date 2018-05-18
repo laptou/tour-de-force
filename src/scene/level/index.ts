@@ -157,6 +157,15 @@ export class LevelScene extends Phaser.Scene {
         this.state.modes = this.level.modes;
         this.state.level = this.level;
 
+        for (const data of this.level.goals) {
+            // invert Y coordinate so Y = 0 is at the bottom
+            data.y = this.origin.y / 32 - data.y;
+            data.x = this.origin.x / 32 + data.x;
+
+            const goal = new Goal(this, data);
+
+            this.tiles.add(goal);
+        }
 
         for (const data of this.level.tiles) {
             // invert Y coordinate so Y = 0 is at the bottom
@@ -173,16 +182,6 @@ export class LevelScene extends Phaser.Scene {
                 this.state.track = tile;
 
             this.tiles.add(tile);
-        }
-
-        for (const data of this.level.goals) {
-            // invert Y coordinate so Y = 0 is at the bottom
-            data.y = this.origin.y / 32 - data.y;
-            data.x = this.origin.x / 32 + data.x;
-
-            const goal = new Goal(this, data);
-
-            this.tiles.add(goal);
         }
     }
 }
