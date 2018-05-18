@@ -1,14 +1,28 @@
 export namespace Text {
     export const Font = {
-        Normal: "Clear Sans"
+        Normal: "Clear Sans",
+        Display: "Montserrat"
     };
 
     export const Header = {
-        fontFamily: Font.Normal,
+        fontFamily: Font.Display,
         fontStyle: "bold",
         fontSize: 24,
         fill: "black"
     };
+
+    export const Display = {
+        Light: {
+            fontFamily: Font.Display,
+            fontSize: 16,
+            fill: "black"
+        },
+        Dark: {
+            fontFamily: Font.Display,
+            fontSize: 16,
+            fill: "white"
+        }
+    }
 
     export const Normal = {
         Light: {

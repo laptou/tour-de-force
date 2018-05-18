@@ -1,10 +1,11 @@
-import { LevelData } from "@lib/level";
+import { AnnotationType, LevelData } from "@lib/level";
 import { Goal } from "@scene/level/goal";
 import { LevelHud } from "@scene/level/hud";
 import { LevelState } from "@scene/level/state";
-import { clamp, Size, SizeLike, Vector, VectorLike } from "@util/math";
+import { Size, SizeLike, Vector, VectorLike } from "@util/math";
 import * as Phaser from "phaser";
 
+import { Text } from "../../config";
 import { Tile } from "./tile";
 
 const { sin, cos, random, PI, max, min, abs } = Math;
@@ -73,25 +74,19 @@ export class LevelScene extends Phaser.Scene {
         this.hud = new LevelHud(this);
         this.add.existing(this.hud);
 
-        this.matter.world.createDebugGraphic();
-        this.matter.world.drawDebug = true;
+        // this.matter.world.createDebugGraphic();
+        // this.matter.world.drawDebug = true;
     }
 
     public update(total: number, delta: number) {
         const cam = this.cameras.main;
-        const level = this.level as LevelData;
-
-        // update camera
+        const width = min(cam.width, this.bounds.width);
 
         if (this.state.track) {
-            cam.scrollX = this.state.track.x - this.bounds.width / 2;
+            cam.scrollX = this.state.track.x - width / 2;
             // cam.scrollY = this.state.track.y - this.bounds.height / 2;
         }
 
-        const clampedX = clamp(0, cam.scrollX, cam.width - this.bounds.width - this.padding.width);
-        const clampedY = clamp(0, cam.scrollY, cam.height - this.bounds.height - this.padding.height);
-
-        this.hud.setPosition(clampedX, 0);
         this.hud.update();
     }
 
@@ -157,6 +152,30 @@ export class LevelScene extends Phaser.Scene {
         this.state.modes = this.level.modes;
         this.state.level = this.level;
 
+        for (const data of this.level.annotations) {
+            switch (data.type) {
+                case AnnotationType.Text:
+                    const textAnnotation = this.make.text({
+                        style: {
+                            ...Text.Header,
+                            stroke: "#FFFFFF",
+                            strokeThickness: 10
+                        },
+                        text: data.text,
+                        x: this.origin.x + data.x * 32,
+                        y: this.origin.y - data.y * 32,
+                        origin: { x: 0, y: 1 }
+                    });
+
+                    this.tiles.add(textAnnotation);
+                    break;
+                default:
+                    // invalid annotation
+                    // don't throw error i guess
+                    break;
+            }
+        }
+
         for (const data of this.level.goals) {
             // invert Y coordinate so Y = 0 is at the bottom
             data.y = this.origin.y / 32 - data.y;
@@ -164,6 +183,18 @@ export class LevelScene extends Phaser.Scene {
 
             const goal = new Goal(this, data);
 
+            goal.on("update:completed", (completed: boolean) => {
+                if (this.state.goals.every(g => g.completed)) {
+                    // level completed!
+                    this.scene.transition({
+                        target: "level-select",
+                        duration: 2000,
+                        onUpdate: this.ontransitionupdate
+                    })
+                }
+            });
+
+            this.state.goals.push(goal);
             this.tiles.add(goal);
         }
 
@@ -181,7 +212,11 @@ export class LevelScene extends Phaser.Scene {
             if (data.track)
                 this.state.track = tile;
 
+            this.state.tiles.push(tile);
             this.tiles.add(tile);
         }
+    }
+
+    private ontransitionupdate(progress: number) {
     }
 }

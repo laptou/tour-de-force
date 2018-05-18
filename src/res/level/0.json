@@ -1,17 +1,19 @@
 {
     "index": 0,
-    "width": 32,
+    "width": 64,
     "height": 12,
     "time": 30,
     "modes": {
         "force": 4
     },
-    "annotations": {
-        "type": "text",
-        "text": "Get the crate into the goal.",
-        "x": 1,
-        "y": 6
-    },
+    "annotations": [
+        {
+            "type": "text",
+            "text": "Get the crate into the goal.",
+            "x": 1,
+            "y": 6
+        }
+    ],
     "tiles": [
         {
             "x": 3,

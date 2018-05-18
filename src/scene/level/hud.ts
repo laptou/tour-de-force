@@ -3,7 +3,7 @@ import { LevelScene } from "@scene/level";
 import { Tile } from "@scene/level/tile";
 import { ControlAlignment, HudButton, ModeHudButtonConfig } from "@scene/util/ui";
 import { fixed, precision } from "@util/format";
-import { Ray, Vector } from "@util/math";
+import { clamp, Ray, Vector } from "@util/math";
 import {
     Angle,
     AngularVelocity,
@@ -18,6 +18,8 @@ import {
 } from "@util/measurement";
 
 import { Text } from "../../config";
+
+const { min, max } = Math;
 
 export class LevelHud extends Phaser.GameObjects.Container {
     public scene: LevelScene;
@@ -37,15 +39,17 @@ export class LevelHud extends Phaser.GameObjects.Container {
         this.scene = scene;
 
         const cam = scene.cameras.main;
-        const { height, width } = scene.bounds;
         const { height: py, width: px } = scene.padding;
+
+        const height = Math.min(scene.bounds.height, cam.height - py * 2);
+        const width = Math.min(scene.bounds.width, cam.width - px * 2);
 
         this.frame = scene.make.graphics({})
             .fillStyle(0xFFFFFF)
-            .fillRect(0, 0, px, height)
-            .fillRect(width + px * 2, 0, px, height)
-            .fillRect(0, 0, width, py)
-            .fillRect(0, height + py * 2, width, py)
+            .fillRect(0, py, px, height)
+            .fillRect(width + px, py, px, height)
+            .fillRect(px, 0, width, py)
+            .fillRect(px, height + py, width, py)
             .lineStyle(4, 0x000000)
             .strokeRect(px, py, width, height);
         this.add(this.frame);
@@ -101,7 +105,7 @@ export class LevelHud extends Phaser.GameObjects.Container {
         };
 
         // mode buttons
-        let x = scene.padding.width;
+        let x = scene.padding.width + 24;
         for (const mode in scene.state.modes) {
             if (!scene.state.modes.hasOwnProperty(mode)) continue;
 
@@ -118,15 +122,23 @@ export class LevelHud extends Phaser.GameObjects.Container {
         }
 
         // events 
-        scene.input.on("pointermove", this.onPointerMove, this);
-        scene.input.on("pointerup", this.onPointerUp, this);
-        scene.events.on("tiledown", this.onTileDown, this);
+        scene.input.on("pointermove", this.onpointermove, this);
+        scene.input.on("pointerup", this.onpointerup, this);
+        scene.events.on("tiledown", this.ontiledown, this);
     }
 
     public update() {
         const cam = this.scene.cameras.main;
         const level = this.scene.level as LevelData;
         const target = this.scene.state.target;
+
+        const width = min(cam.width, this.scene.bounds.width);
+        const height = min(cam.height, this.scene.bounds.height);
+
+        const clampedX = clamp(0, cam.scrollX, this.scene.bounds.width - width + this.scene.padding.width * 2);
+        const clampedY = clamp(0, cam.scrollY, this.scene.bounds.height - height + this.scene.padding.height * 2);
+
+        this.setPosition(clampedX, 0);
 
         if (target) {
             const body = target.body as Matter.Body;
@@ -379,16 +391,16 @@ export class LevelHud extends Phaser.GameObjects.Container {
         this.dirty = true;
     }
 
-    private onPointerUp(pointer: Phaser.Input.Pointer, x: number, y: number) {
+    private onpointerup(pointer: Phaser.Input.Pointer, x: number, y: number) {
         this.activateRay();
         this.destroyRay();
     }
 
-    private onPointerMove(pointer: Phaser.Input.Pointer) {
+    private onpointermove(pointer: Phaser.Input.Pointer) {
         this.updateRay(pointer.x, pointer.y);
     }
 
-    private onTileDown(pointer: Phaser.Input.Pointer, tile: Tile) {
+    private ontiledown(pointer: Phaser.Input.Pointer, tile: Tile) {
         switch (this.scene.state.mode) {
             case GameMode.Force:
             case GameMode.Velocity:

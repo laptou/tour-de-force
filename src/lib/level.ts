@@ -33,6 +33,19 @@ export interface GoalData {
     objectives: ObjectiveConfig[];
 }
 
+export enum AnnotationType {
+    Text = "text"
+}
+
+export interface TextAnnotationData {
+    type: AnnotationType.Text;
+    text: string;
+    x: number;
+    y: number;
+}
+
+export type AnnotationData = TextAnnotationData;
+
 export interface LevelData {
     index: number;
     width: number;
@@ -41,6 +54,7 @@ export interface LevelData {
     modes: { [mode: string]: number };
     tiles: TileData[];
     goals: GoalData[];
+    annotations: AnnotationData[];
 }
 
 export enum ObjectiveType {
