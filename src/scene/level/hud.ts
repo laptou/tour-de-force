@@ -132,11 +132,11 @@ export class LevelHud extends Phaser.GameObjects.Container {
         const level = this.scene.level as LevelData;
         const target = this.scene.state.target;
 
-        const width = min(cam.width, this.scene.bounds.width);
-        const height = min(cam.height, this.scene.bounds.height);
+        const width = min(cam.width - this.scene.padding.width * 2, this.scene.bounds.width);
+        const height = min(cam.height - this.scene.padding.height * 2, this.scene.bounds.height);
 
-        const clampedX = clamp(0, cam.scrollX, this.scene.bounds.width - width + this.scene.padding.width * 2);
-        const clampedY = clamp(0, cam.scrollY, this.scene.bounds.height - height + this.scene.padding.height * 2);
+        const clampedX = clamp(0, cam.scrollX, this.scene.bounds.width - width);
+        const clampedY = clamp(0, cam.scrollY, this.scene.bounds.height - height);
 
         this.setPosition(clampedX, 0);
 

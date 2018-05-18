@@ -1,4 +1,5 @@
 import { AnnotationType, LevelData } from "@lib/level";
+import { LevelBanner, LevelBannerType } from "@scene/level/banner";
 import { Goal } from "@scene/level/goal";
 import { LevelHud } from "@scene/level/hud";
 import { LevelState } from "@scene/level/state";
@@ -20,6 +21,7 @@ export class LevelScene extends Phaser.Scene {
     public origin!: VectorLike;
 
     private hud!: LevelHud;
+    private banner?: LevelBanner;
 
     private tiles!: Phaser.GameObjects.Container;
     private grid!: Phaser.GameObjects.TileSprite;
@@ -63,6 +65,8 @@ export class LevelScene extends Phaser.Scene {
         if (!("controls" in this.textures.list))
             this.load.spritesheet("controls", require("@res/img/control-sprites.png"), { frameWidth: 128, frameHeight: 128 });
 
+        if (!("banners" in this.textures.list))
+            this.load.spritesheet("banners", require("@res/img/banner-sprites.png"), { frameWidth: 640, frameHeight: 128 });
     }
 
     public create() {
@@ -185,12 +189,7 @@ export class LevelScene extends Phaser.Scene {
 
             goal.on("update:completed", (completed: boolean) => {
                 if (this.state.goals.every(g => g.completed)) {
-                    // level completed!
-                    this.scene.transition({
-                        target: "level-select",
-                        duration: 2000,
-                        onUpdate: this.ontransitionupdate
-                    })
+                    this.levelCompleted();
                 }
             });
 
@@ -215,6 +214,23 @@ export class LevelScene extends Phaser.Scene {
             this.state.tiles.push(tile);
             this.tiles.add(tile);
         }
+    }
+
+    private levelCompleted() {
+        // level completed!
+        this.banner = new LevelBanner(this, LevelBannerType.Success);
+        this.add.existing(this.banner);
+
+        const { scrollX, scrollY, width, height } = this.cameras.main;
+
+        this.banner.setPosition(scrollX + width / 2, scrollY + height / 2);
+        this.banner.begin();
+
+        // this.scene.transition({
+        //     target: "level-select",
+        //     duration: 2000,
+        //     onUpdate: this.ontransitionupdate
+        // });
     }
 
     private ontransitionupdate(progress: number) {
