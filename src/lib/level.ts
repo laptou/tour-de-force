@@ -30,7 +30,7 @@ export interface GoalData {
     width: number;
     height: number;
     position: VectorLike;
-    objectives: ObjectiveConfig[];
+    objectives: ObjectiveData[];
 }
 
 export enum AnnotationType {
@@ -58,6 +58,7 @@ export interface LevelData {
 }
 
 export enum ObjectiveType {
+    Type = "type",
     Position = "position",
     Velocity = "velocity",
     Speed = "speed",
@@ -65,32 +66,21 @@ export enum ObjectiveType {
     AngularVelocity = "angular-velocity"
 }
 
-export interface ObjectiveConfig {
-    target: { minimum: number | VectorLike; maximum: number | VectorLike } | number;
-    type: ObjectiveType;
-    tiles: TileType[];
+export interface TypeObjectiveData {
+    type: ObjectiveType.Type;
+    target: TileType;
 }
 
-export class Objective {
-    public minimum: number | VectorLike;
-    public maximum: number | VectorLike;
-    public type: ObjectiveType;
-    public allowedTiles: TileType[];
-
-
-    public constructor(config: ObjectiveConfig) {
-        if (typeof config.target === "object") {
-            const { minimum, maximum } = config.target;
-            [this.minimum, this.maximum] = [minimum, maximum];
-        }
-        else {
-            this.minimum = this.maximum = config.target;
-        }
-
-        this.type = config.type;
-        this.allowedTiles = config.tiles;
-    }
+export interface PositionObjectiveData {
+    type: ObjectiveType.Position;
 }
+
+export interface VelocityObjectiveData {
+    type: ObjectiveType.Velocity;
+    target: { minimum?: VectorLike | number; maximum?: VectorLike | number } | VectorLike | number;
+}
+
+export type ObjectiveData = TypeObjectiveData | PositionObjectiveData | VelocityObjectiveData;
 
 export enum GoalType {
     Required,

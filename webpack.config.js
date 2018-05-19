@@ -6,7 +6,6 @@ const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CleanWebpackPlugin = require("clean-webpack-plugin");
 const HardSourceWebpackPlugin = require("hard-source-webpack-plugin");
-const CircularDependencyPlugin = require('circular-dependency-plugin')
 
 const plugins = [
     new ForkTsCheckerWebpackPlugin({

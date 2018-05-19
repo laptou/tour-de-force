@@ -19,7 +19,7 @@ export class Vector {
     /**
      * Returns a < b.
      */
-    public static gt(a: number | VectorLike, b: VectorLike): boolean {
+    public static lt(a: number | VectorLike, b: VectorLike): boolean {
         if (typeof a === "number") return a < Vector.len(b);
 
         return a.x < b.x && a.y < b.y;
@@ -28,7 +28,7 @@ export class Vector {
     /**
      * Returns a > b.
      */
-    public static lt(a: number | VectorLike, b: VectorLike): boolean {
+    public static gt(a: number | VectorLike, b: VectorLike): boolean {
         if (typeof a === "number") return a > Vector.len(b);
 
         return a.x > b.x && a.y > b.y;

@@ -29,3 +29,9 @@ export function reverseEnum(type: any) {
         }
     }
 }
+
+export function find<T>(arr: T[], predicate: (value: T, index: number, arr: T[]) => boolean) {
+    const index = arr.findIndex(predicate);
+    if (index !== -1) return arr[index];
+    else return null;
+}

@@ -1,5 +1,5 @@
 {
-    "index": 1,
+    "index": 2,
     "width": 32,
     "height": 12,
     "time": 30,
@@ -9,7 +9,7 @@
     "annotations": [
         {
             "type": "text",
-            "text": "Get the wooden crate into the goal.",
+            "text": "Now do it again, but take it slow.",
             "x": 1,
             "y": 6
         }
@@ -47,6 +47,12 @@
                 {
                     "type": "type",
                     "target": "wood"
+                },
+                {
+                    "type": "velocity",
+                    "target": {
+                        "maximum": 0.2
+                    }
                 }
             ]
         }

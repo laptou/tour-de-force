@@ -8,28 +8,27 @@ export interface TileConfig {
     elastic?: boolean;
 }
 
+export const TileStats = {
+    [TileType.Wood]: {
+        frame: 5,
+        mass: 75,
+    },
+    [TileType.Steel]: {
+        frame: 6,
+        mass: 120
+    },
+    [TileType.Aluminum]: {
+        frame: 7,
+        mass: 100
+    }
+};
+
 export class Tile extends Phaser.GameObjects.Sprite {
 
-    constructor(scene: Phaser.Scene, config: TileConfig) {
-        let frame: number;
-        let mass: number;
+    public tileType: TileType;
 
-        switch (config.type) {
-            case TileType.Wood:
-                frame = 5;
-                mass = 75;
-                break;
-            case TileType.Steel:
-                frame = 6;
-                mass = 120;
-                break;
-            case TileType.Aluminum:
-                frame = 7;
-                mass = 100;
-                break;
-            default:
-                throw new Error("Invalid crate type.");
-        }
+    constructor(scene: Phaser.Scene, config: TileConfig) {
+        const { frame, mass } = TileStats[config.type];
 
         super(scene,
             config ? config.x * 32 || 0 : 0,
@@ -46,5 +45,7 @@ export class Tile extends Phaser.GameObjects.Sprite {
 
         matterObj.type = "tile";
         matterObj.setInteractive();
+
+        this.tileType = config.type;
     }
 }

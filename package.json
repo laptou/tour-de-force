@@ -27,6 +27,7 @@
     "@types/webpack": "^4.1.6",
     "@types/webpack-env": "^1.13.5",
     "clean-webpack-plugin": "^0.1.19",
+    "expose-loader": "^0.7.5",
     "file-loader": "^1.1.11",
     "fork-ts-checker-webpack-plugin": "^0.4.1",
     "hard-source-webpack-plugin": "^0.6.7",
@@ -36,12 +37,10 @@
     "ts-loader": "^4.3.0",
     "tslint": "^5.10.0",
     "typescript": "^2.8.3",
-    "webpack": "^4.8.2",
+    "webpack": "^4.8.3",
     "webpack-cli": "^2.1.3"
   },
   "dependencies": {
-    "circular-dependency-plugin": "^5.0.2",
-    "expose-loader": "^0.7.5",
     "phaser": "^3.8.0"
   }
 }
