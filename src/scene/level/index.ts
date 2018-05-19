@@ -97,7 +97,9 @@ export class LevelScene extends Phaser.Scene {
     private loadWorld() {
 
         // load the level
-        this.state.level = require(`@res/level/${this.level}.json`) as LevelData;
+        // duplicate the object to avoid modifying the actual instance
+        // that json-loader created
+        this.state.level = JSON.parse(JSON.stringify(require(`@res/level/${this.level}.json`))) as LevelData;
 
         //#region Boundaries
 
