@@ -22,11 +22,14 @@ export class Goal extends Phaser.GameObjects.Container {
 
         this.setPosition(x, y);
 
-        this.background = new Phaser.GameObjects.TileSprite(
-            scene,
-            0, 0,
-            width, height,
-            "sprites", 13);
+        this.background = new Phaser.GameObjects.TileSprite(scene, 0, 0, width, height, "sprites", 13);
+        // scene.make.tileSprite(
+        //     {
+        //         width,
+        //         height,
+        //         key: "sprites",
+        //         frame: 13
+        //     } as any as Phaser.GameObjects.TileSprite, false);
 
         this.background.tint = 0xFFAAAA;
 

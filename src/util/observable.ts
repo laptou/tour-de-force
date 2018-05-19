@@ -3,27 +3,20 @@ interface IEventEmitter {
     on(event: string | symbol, handler: Function, context?: any): this;
 }
 
-export function Observable<T extends IEventEmitter>(properties?: string[]) {
-    return function (target: any) {
-        if (!properties) {
-            properties = [];
+export function observable<T extends IEventEmitter>(target: any, prop: string | symbol) {
+    if (!("__shadow" in target))
+        target["__shadow"] = {};
 
-            for (const prop in target)
-                if (target.hasOwnProperty(prop)) properties.push(prop);
+    Object.defineProperty(target, prop, {
+        get: () => "__shadow" in target ? target.__shadow[prop] : target[prop],
+        set: value => {
+            target.__shadow[prop] = value;
+            try {
+                // tslint:disable-next-line:prefer-template
+                target.emit("update:" + prop.toString(), value);
+            } catch (e) {
+
+            }
         }
-
-        for (const prop of properties) {
-            Object.defineProperty(target, prop, {
-                get: () => target[prop],
-                set: value => {
-                    target[prop] = value;
-
-                    // tslint:disable-next-line:prefer-template
-                    target.emit("update:" + prop, value);
-                }
-            })
-        }
-
-        return target;
-    }
+    })
 }

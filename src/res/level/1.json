@@ -1,0 +1,50 @@
+{
+    "index": 1,
+    "width": 32,
+    "height": 12,
+    "time": 30,
+    "modes": {
+        "force": 4
+    },
+    "annotations": [
+        {
+            "type": "text",
+            "text": "Get the wooden crate into the goal.",
+            "x": 1,
+            "y": 6
+        }
+    ],
+    "tiles": [
+        {
+            "x": 3,
+            "y": 3,
+            "type": "aluminum",
+            "track": true,
+            "show": {
+                "mass": true
+            }
+        },
+        {
+            "x": 10,
+            "y": 3,
+            "type": "wood",
+            "show": {
+                "mass": true
+            }
+        }
+    ],
+    "goals": [
+        {
+            "x": 28,
+            "y": 3,
+            "width": 6,
+            "height": 6,
+            "type": "required",
+            "objectives": [
+                {
+                    "type": "position"
+                }
+            ]
+        }
+    ]
+}

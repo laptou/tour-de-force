@@ -13,7 +13,7 @@ const { sin, cos, random, PI, max, min, abs } = Math;
 
 export class LevelScene extends Phaser.Scene {
 
-    public level!: LevelData | number;
+    public level!: number;
     public state!: LevelState;
 
     public bounds!: SizeLike;
@@ -22,6 +22,7 @@ export class LevelScene extends Phaser.Scene {
 
     private hud!: LevelHud;
     private banner?: LevelBanner;
+    private overlay?: Phaser.GameObjects.TileSprite;
 
     private tiles!: Phaser.GameObjects.Container;
     private grid!: Phaser.GameObjects.TileSprite;
@@ -37,12 +38,14 @@ export class LevelScene extends Phaser.Scene {
     }
 
     public preload() {
+        // load textures
+
         if (!("tile-level" in this.textures.list)) {
             const graphics = this.make.graphics({}, false);
 
             graphics
                 .fillStyle(0xFFFFFF)
-                .fillRect(0, 0, 80, 80)
+                .fillRect(0, 0, 128, 128)
                 .lineStyle(3, 0x000000, 1)
                 .lineBetween(0, 0, 0, 128)
                 .lineBetween(0, 0, 128, 0)
@@ -67,23 +70,20 @@ export class LevelScene extends Phaser.Scene {
 
         if (!("banners" in this.textures.list))
             this.load.spritesheet("banners", require("@res/img/banner-sprites.png"), { frameWidth: 640, frameHeight: 128 });
+
     }
 
     public create() {
         this.state = new LevelState();
 
-        this.createWorld();
         this.loadWorld();
-
-        this.hud = new LevelHud(this);
-        this.add.existing(this.hud);
-
-        // this.matter.world.createDebugGraphic();
-        // this.matter.world.drawDebug = true;
     }
 
     public update(total: number, delta: number) {
         const cam = this.cameras.main;
+
+        if (!cam) return;
+
         const width = min(cam.width, this.bounds.width);
 
         if (this.state.track) {
@@ -94,16 +94,17 @@ export class LevelScene extends Phaser.Scene {
         this.hud.update();
     }
 
-    private createWorld() {
+    private loadWorld() {
+
+        // load the level
+        this.state.level = require(`@res/level/${this.level}.json`) as LevelData;
+
+        //#region Boundaries
 
         const cam = this.cameras.main;
         const { height, width } = cam;
 
-        // load the level
-        this.level = require(`@res/level/${0}.json`) as LevelData;
-
-        // set up camera and physics        
-        this.bounds = new Size(this.level.width * 32, this.level.height * 32);
+        this.bounds = new Size(this.state.level.width * 32, this.state.level.height * 32);
 
         this.padding = new Size(
             max(50, (width - this.bounds.width) / 2),
@@ -116,6 +117,14 @@ export class LevelScene extends Phaser.Scene {
             this.bounds.width + this.padding.width * 2,
             this.bounds.height + this.padding.height * 2);
 
+        //#endregion
+
+        //#region Grid
+
+        if (this.grid) {
+            this.grid.destroy();
+        }
+
         this.grid = this.add.tileSprite(
             this.padding.width + this.bounds.width / 2,
             this.padding.height + this.bounds.height / 2,
@@ -124,6 +133,25 @@ export class LevelScene extends Phaser.Scene {
             "tile-level");
 
         this.grid.flipY = true;
+
+        //#endregion
+
+        if (this.tiles)
+            this.tiles.destroy();
+
+        this.tiles = this.make.container({});
+
+        //#region HUD
+
+        if (this.hud)
+            this.hud.destroy();
+
+        this.hud = new LevelHud(this);
+        this.children.add(this.hud);
+
+        //#endregion
+
+        //#region Physics
 
         this.matter.world.setBounds(
             this.padding.width,
@@ -146,17 +174,11 @@ export class LevelScene extends Phaser.Scene {
         walls.right.friction = 0;
         walls.right.restitution = 0;
 
-        // add the tiles
-        this.tiles = this.make.container({});
-    }
+        //#endregion
 
-    private loadWorld() {
-        if (typeof this.level === "number") return;
+        //#region Tiles
 
-        this.state.modes = this.level.modes;
-        this.state.level = this.level;
-
-        for (const data of this.level.annotations) {
+        for (const data of this.state.level.annotations) {
             switch (data.type) {
                 case AnnotationType.Text:
                     const textAnnotation = this.make.text({
@@ -180,7 +202,7 @@ export class LevelScene extends Phaser.Scene {
             }
         }
 
-        for (const data of this.level.goals) {
+        for (const data of this.state.level.goals) {
             // invert Y coordinate so Y = 0 is at the bottom
             data.y = this.origin.y / 32 - data.y;
             data.x = this.origin.x / 32 + data.x;
@@ -197,7 +219,7 @@ export class LevelScene extends Phaser.Scene {
             this.tiles.add(goal);
         }
 
-        for (const data of this.level.tiles) {
+        for (const data of this.state.level.tiles) {
             // invert Y coordinate so Y = 0 is at the bottom
             data.y = this.origin.y / 32 - data.y;
             data.x = this.origin.x / 32 + data.x;
@@ -214,6 +236,7 @@ export class LevelScene extends Phaser.Scene {
             this.state.tiles.push(tile);
             this.tiles.add(tile);
         }
+        //#endregion
     }
 
     private levelCompleted() {
@@ -227,13 +250,24 @@ export class LevelScene extends Phaser.Scene {
         this.banner.setPosition(scrollX + width / 2, scrollY + height / 2);
         this.banner.begin();
 
-        this.scene.transition({
-            target: "level-select",
-            duration: 2000,
-            onUpdate: this.ontransitionupdate
-        });
+        this.overlay = this.add.tileSprite(scrollX + width / 2, scrollY + height / 2, width, height, "tile-16");
+        this.overlay.setAlpha(0);
+
+        setTimeout(() =>
+            this.scene.transition({
+                target: "level-select",
+                duration: 2000,
+                onUpdate: this.ontransitionupdate,
+                moveBelow: true
+            }), 2000);
     }
 
     private ontransitionupdate(progress: number) {
+        if (this.overlay) {
+            this.overlay.setAlpha(progress * 1.2);
+
+            const offset = 100 / (progress * progress);
+            this.overlay.setTilePosition(-offset, -offset);
+        }
     }
 }

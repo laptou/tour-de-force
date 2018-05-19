@@ -12,26 +12,11 @@ class TourDeForceGame extends Phaser.Game {
             type: Phaser.WEBGL,
             backgroundColor: "#FFFFFF",
             physics: { default: "matter", matter: { gravity: { y: 0.981 } }, debug: true },
-            scene: [
-                TitleScene,
-                LevelSelectScene,
-                LevelScene
-            ],
-            // resolution: window.devicePixelRatio,
+            scene: [TitleScene, LevelSelectScene, LevelScene]
         });
 
         const renderer = this.renderer as Phaser.Renderer.WebGL.WebGLRenderer;
         renderer.addPipeline("greyscale", new GreyscalePipeline(this));
-
-        this.events.on("ready", this.onready, this);
-    }
-
-    public onready() {
-
-
-
-        console.log("eggu");
-        // this.scene.start("level", { level: 0 });
     }
 }
 

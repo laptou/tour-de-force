@@ -55,6 +55,7 @@ export class LevelHud extends Phaser.GameObjects.Container {
 
     constructor(scene: LevelScene) {
         super(scene);
+
         this.scene = scene;
 
         const cam = scene.cameras.main;
@@ -65,10 +66,10 @@ export class LevelHud extends Phaser.GameObjects.Container {
 
         this.frame = scene.make.graphics({})
             .fillStyle(0xFFFFFF)
-            .fillRect(0, py, px, height)
-            .fillRect(width + px, py, px, height)
-            .fillRect(px, 0, width, py)
-            .fillRect(px, height + py, width, py)
+            .fillRect(0, 0, px, height + py * 2)
+            .fillRect(width + px, 0, px, height + py * 2)
+            .fillRect(0, 0, width + px * 2, py)
+            .fillRect(0, height + py, width + px * 2, py)
             .lineStyle(4, 0x000000)
             .strokeRect(px, py, width, height);
         this.add(this.frame);
@@ -105,21 +106,23 @@ export class LevelHud extends Phaser.GameObjects.Container {
             style: Text.Normal.Light
         }));
 
-        // mode buttons
-        let x = scene.padding.width + 24;
-        for (const mode in scene.state.modes) {
-            if (!scene.state.modes.hasOwnProperty(mode)) continue;
+        if (scene.state.modes) {
+            // mode buttons
+            let x = scene.padding.width + 24;
+            for (const mode in scene.state.modes) {
+                if (!scene.state.modes.hasOwnProperty(mode)) continue;
 
-            const btn = this.makeModeHudButton(scene, {
-                sprite: "controls",
-                offset: { x, y: py - 32 },
-                mode,
-                ...modeBtns[mode]
-            });
+                const btn = this.makeModeHudButton(scene, {
+                    sprite: "controls",
+                    offset: { x, y: py - 32 },
+                    mode,
+                    ...modeBtns[mode]
+                });
 
-            this.add(btn);
+                this.add(btn);
 
-            x += 48;
+                x += 48;
+            }
         }
 
         // events 
@@ -128,9 +131,19 @@ export class LevelHud extends Phaser.GameObjects.Container {
         scene.events.on("tiledown", this.ontiledown, this);
     }
 
+    public destroy() {
+        if (this.scene) {
+            this.scene.input.off("pointermove", this.onpointermove, this, false);
+            this.scene.input.off("pointerup", this.onpointerup, this, false);
+            this.scene.events.off("tiledown", this.ontiledown, this, false);
+        }
+
+        super.destroy();
+    }
+
     public update() {
         const cam = this.scene.cameras.main;
-        const level = this.scene.level as LevelData;
+        const level = this.scene.state.level as LevelData;
         const target = this.scene.state.target;
 
         const width = min(cam.width - this.scene.padding.width * 2, this.scene.bounds.width);
@@ -264,7 +277,7 @@ export class LevelHud extends Phaser.GameObjects.Container {
     }
 
     private createRay(x: number, y: number) {
-        if (this.scene.state.modes[this.mode] <= 0) return;
+        if (this.scene.state.modes && this.scene.state.modes[this.mode] <= 0) return;
 
         if (this.scene.state.completed) return;
 
@@ -384,11 +397,13 @@ export class LevelHud extends Phaser.GameObjects.Container {
                     break;
             }
 
-            this.scene.state.modes[this.mode]--;
+            if (this.scene.state.modes) {
+                this.scene.state.modes[this.mode]--;
 
-            // tslint:disable-next-line:prefer-template
-            const button = this.getByName("mode:" + this.mode) as HudButton;
-            button.setText(this.scene.state.modes[this.mode].toString());
+                // tslint:disable-next-line:prefer-template
+                const button = this.getByName("mode:" + this.mode) as HudButton;
+                button.setText(this.scene.state.modes[this.mode].toString());
+            }
         }
     }
 
@@ -457,8 +472,10 @@ export class LevelHud extends Phaser.GameObjects.Container {
                     btn.sprite.setPipeline("greyscale");
                     btn.setText(modeBtns[c.mode].text);
                 } else {
-                    btn.setText(this.scene.state.modes[c.mode].toString());
-                    btn.sprite.resetPipeline();
+                    if (this.scene.state.modes) {
+                        btn.setText(this.scene.state.modes[c.mode].toString());
+                        btn.sprite.resetPipeline();
+                    }
                 }
             });
         }

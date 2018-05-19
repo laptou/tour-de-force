@@ -58,10 +58,11 @@ export class TitleScene extends Phaser.Scene {
 
         this.input.once('pointerup', (event: any) => {
             this.scene.transition({
-                target: 'level-select',
+                target: "level-select",
                 duration: 1000,
-                onUpdate: this.outro,
-                moveBelow: true
+                onUpdate: this.ontransitionupdate,
+                moveBelow: true,
+                allowInput: false,
             });
         });
     }
@@ -79,7 +80,7 @@ export class TitleScene extends Phaser.Scene {
         }
     }
 
-    private outro(progress: number) {
+    private ontransitionupdate(progress: number) {
         this.speed = 0.05 + progress * progress * 0.15;
 
         if (this.logo) this.logo.alpha = max(0, 1 - progress * 1.7);
