@@ -42,9 +42,6 @@
             "type": "required",
             "objectives": [
                 {
-                    "type": "position"
-                },
-                {
                     "type": "type",
                     "target": "wood"
                 },

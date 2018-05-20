@@ -59,9 +59,7 @@ export interface LevelData {
 
 export enum ObjectiveType {
     Type = "type",
-    Position = "position",
     Velocity = "velocity",
-    Speed = "speed",
     Momentum = "momentum",
     AngularVelocity = "angular-velocity"
 }
@@ -71,16 +69,17 @@ export interface TypeObjectiveData {
     target: TileType;
 }
 
-export interface PositionObjectiveData {
-    type: ObjectiveType.Position;
+export interface ScalarObjectiveData {
+    type: ObjectiveType.Momentum;
+    target: { minimum?: number; maximum?: number } | number;
 }
 
-export interface VelocityObjectiveData {
-    type: ObjectiveType.Velocity;
+export interface VectorObjectiveData {
+    type: ObjectiveType.Velocity | ObjectiveType.Momentum;
     target: { minimum?: VectorLike | number; maximum?: VectorLike | number } | VectorLike | number;
 }
 
-export type ObjectiveData = TypeObjectiveData | PositionObjectiveData | VelocityObjectiveData;
+export type ObjectiveData = TypeObjectiveData | VectorObjectiveData;
 
 export enum GoalType {
     Required,

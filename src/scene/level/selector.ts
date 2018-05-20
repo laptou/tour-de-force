@@ -97,7 +97,6 @@ export abstract class VectorLevelHudSelector
             const offset = Vector.div(d, 2);
             const source = this.ray.source;
             const alpha = Math.min(1, dlen / 50);
-            const camera = this.scene.cameras.main;
 
             const vec = this.query();
 
@@ -132,7 +131,9 @@ export class ForceLevelHudSelector extends VectorLevelHudSelector {
     public get color() { return 0x800000; }
 
     public get info() {
-        const body = this.state.target as any;
+        if (!this.state.target) return "";
+
+        const body = this.state.target.body as any;
         const time = new Measurement(1 / 60, Time.Second);
         const mass = new Measurement(body.mass, Mass.Kilogram);
         const force = this.query().magnitude();
@@ -156,7 +157,7 @@ export class ForceLevelHudSelector extends VectorLevelHudSelector {
         }
 
         if (this.ray && this.state.target) {
-            const body = this.state.target as any;
+            const body = this.state.target.body as any;
 
             const s = this.ray.source;
             const d = this.ray.direction;
@@ -171,10 +172,9 @@ export class ForceLevelHudSelector extends VectorLevelHudSelector {
             // see http://brm.io/matter-js/docs/files/src_body_Body.js.html line 582
             // so no conversion necessary
 
-            body.applyForceFrom(
+            (this.state.target as any).applyForceFrom(
                 new Phaser.Math.Vector2(s.x, s.y),
-                new Phaser.Math.Vector2(force.x, force.y)
-            );
+                new Phaser.Math.Vector2(force.x, force.y));
         }
     }
 }
@@ -195,7 +195,7 @@ export class VelocityLevelHudSelector extends VectorLevelHudSelector {
     public get info() {
         if (!this.state.target) return "";
 
-        const body = this.state.target as any;
+        const body = this.state.target.body as any;
         const mass = new Measurement(body.mass, Mass.Kilogram);
         const velo = this.query().magnitude();
 
@@ -227,7 +227,7 @@ export class VelocityLevelHudSelector extends VectorLevelHudSelector {
 
             velocity = velocity.to(Velocity.PixelsPerStep);
 
-            body.setVelocity(velocity.x, velocity.y);
+            (this.state.target as any).setVelocity(velocity.x, velocity.y);
         }
     }
 }

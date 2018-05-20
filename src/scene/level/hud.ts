@@ -176,9 +176,8 @@ export class LevelHud extends Phaser.GameObjects.Container {
         if (!this.dirty)
             return;
 
-
         // update overlays if necessary
-        if (this.overlays) {
+        if (this.overlays && this.dirty) {
             this.overlays.clear();
 
             this.actionInfo.text = "";
@@ -217,14 +216,26 @@ export class LevelHud extends Phaser.GameObjects.Container {
 
     private onpointerup(pointer: Phaser.Input.Pointer, x: number, y: number) {
         if (this.selector) {
-            this.selector.activate();
+            if (this.selector.ray.length > 0) {
+                this.selector.activate();
+
+                if (this.state.modes) {
+                    // tslint:disable-next-line:prefer-template
+                    const btn = this.getByName("mode:" + this.state.mode) as HudButton;
+                    btn.setText(this.state.modes[this.state.mode].toFixed());
+                }
+            }
+
             this.remove(this.selector as any as Phaser.GameObjects.GameObject, true);
+            this.selector = undefined;
+            this.dirty = true;
         }
     }
 
     private onpointermove(pointer: Phaser.Input.Pointer) {
         if (this.selector) {
             this.selector.move(pointer.x, pointer.y);
+            this.dirty = true;
         }
     }
 
@@ -244,6 +255,11 @@ export class LevelHud extends Phaser.GameObjects.Container {
             case GameMode.Position:
                 break;
         }
+
+        if (this.selector)
+            this.add(this.selector as any as Phaser.GameObjects.GameObject);
+
+        this.dirty = true;
     }
 
     private makeModeHudButton(scene: LevelScene, config: ModeHudButtonConfig) {

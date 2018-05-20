@@ -225,6 +225,10 @@ export namespace AngularVelocity {
     export const RadiansPerSecond = new Unit(Angle.Radian, Time.Second);
 }
 
+export namespace Momentum {
+    export const KilogramMetersPerSecond = new Unit([Mass.Kilogram, Distance.Meter], [Time.Second]);
+}
+
 export namespace convert {
     export function angle(value: number, from: Angle, to: Angle) {
         if (from === to) return value;
@@ -390,7 +394,7 @@ export class Measurement implements Number {
 }
 
 export class VectorMeasurement extends Vector {
-    public static zero = new VectorMeasurement(0, 0, Unit.scalar);
+    public static get zero() { return new VectorMeasurement(0, 0, Unit.scalar); }
     public unit: Unit;
 
     public constructor(x: VectorLike, u: Unit | BaseUnit);

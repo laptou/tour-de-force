@@ -2,7 +2,7 @@ import { GoalData, ObjectiveData, ObjectiveType, TypeObjectiveData } from "@lib/
 import { Tile, TileStats } from "@scene/level/tile";
 import { find } from "@util/index.ts";
 import { Vector, VectorLike } from "@util/math";
-import { Measurement, Unit, VectorMeasurement, Velocity } from "@util/measurement";
+import { Measurement, Momentum, Unit, VectorMeasurement, Velocity } from "@util/measurement";
 
 import { Text } from "../../config";
 
@@ -57,11 +57,14 @@ export class Goal extends Phaser.GameObjects.Container {
 
             switch (o.type) {
                 case ObjectiveType.Type:
-                case ObjectiveType.Position:
                     continue;
                 case ObjectiveType.Velocity:
                     variable = "v";
                     unit = Velocity.MetersPerSecond;
+                    break;
+                case ObjectiveType.Momentum:
+                    variable = "ρ"
+                    unit = Momentum.KilogramMetersPerSecond;
                     break;
             }
 
@@ -136,20 +139,19 @@ export class Goal extends Phaser.GameObjects.Container {
                 v.x <= bounds.max.x + epsilon && bounds.min.x <= v.x + epsilon &&
                 v.y <= bounds.max.y + epsilon && bounds.min.y <= v.y + epsilon);
 
+            if (!within)
+                return false;
+
             if (o.type === ObjectiveType.Type && o.target !== tile.tileType)
                 return false;
 
             let quantity: Vector | null = null;
 
             switch (o.type) {
-                case ObjectiveType.Position:
-                    return within;
                 case ObjectiveType.Velocity:
-                    if (within) {
-                        quantity =
-                            new VectorMeasurement(body.velocity, Velocity.PixelsPerStep)
-                                .to(Velocity.MetersPerSecond);
-                    }
+                    quantity =
+                        new VectorMeasurement(body.velocity, Velocity.PixelsPerStep)
+                            .to(Velocity.MetersPerSecond);
                     break;
             }
 
