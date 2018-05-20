@@ -4,7 +4,7 @@ export const enum GameMode {
     View = "view",
     Force = "force",
     Velocity = "velocity",
-    Mass = "mass"
+    Position = "position"
 }
 
 export const enum TileType {

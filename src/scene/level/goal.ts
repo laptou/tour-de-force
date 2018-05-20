@@ -155,9 +155,9 @@ export class Goal extends Phaser.GameObjects.Container {
 
             if (quantity && typeof o.target !== "string") {
                 if (typeof o.target === "number") // number
-                    return Math.abs(quantity.length() - o.target) <= 0.01;
+                    return Math.abs(quantity.length() - o.target) < 0.05;
                 else if ("x" in o.target) // vector
-                    return quantity.minus(o.target).length() <= 0.01;
+                    return quantity.minus(o.target).length() < 0.05;
                 else // min and max
                 {
                     if (typeof o.target.maximum !== "undefined")

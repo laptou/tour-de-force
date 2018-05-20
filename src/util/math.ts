@@ -14,7 +14,7 @@ export interface VectorLike { x: number; y: number }
 // tslint:disable:no-use-before-declare
 export class Vector {
 
-    public static zero = new Vector(0, 0);
+    public static get zero() { return new Vector(0, 0); }
 
     /**
      * Returns a < b.

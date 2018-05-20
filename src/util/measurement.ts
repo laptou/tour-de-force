@@ -4,8 +4,8 @@ import { Vector, VectorLike } from "./math";
 
 const { PI, pow } = Math;
 
-type Numeric = VectorMeasurement | Measurement | Vector | number;
-type Scalar = Measurement | number;
+export type Numeric = VectorMeasurement | Measurement | Vector | number;
+export type Scalar = Measurement | number;
 
 export function abs(x: number): number;
 export function abs(x: Measurement): Measurement;
