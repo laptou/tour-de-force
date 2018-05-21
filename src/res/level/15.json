@@ -1,5 +1,5 @@
 {
-    "index": 1,
+    "index": 15,
     "width": 32,
     "height": 12,
     "time": 30,
@@ -9,7 +9,7 @@
     "annotations": [
         {
             "type": "text",
-            "text": "Get the wooden crate into the goal.",
+            "text": "This is a test level. How did you even get in here?",
             "x": 1,
             "y": 6
         }
@@ -21,7 +21,6 @@
             "type": "aluminum",
             "track": true,
             "control": true,
-            "rotation": false,
             "show": {
                 "mass": true
             }
@@ -30,11 +29,17 @@
             "x": 10,
             "y": 3,
             "type": "wood",
-            "control": true,
-            "rotation": false,
             "show": {
                 "mass": true
             }
+        }
+    ],
+    "shapes": [
+        {
+            "data": "0, 3; 3, 3; 3, 0; 6, 0; 6, 6; 0, 6",
+            "x": 3,
+            "y": 7,
+            "static": true
         }
     ],
     "goals": [

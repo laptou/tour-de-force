@@ -12,8 +12,14 @@
         "allowSyntheticDefaultImports": true,
         "baseUrl": ".",
         "paths": {
-            "@screen/*": [
-                "src/screen/*"
+            "@scene/*": [
+                "src/scene/*"
+            ],
+            "@lib/*": [
+                "src/lib/*"
+            ],
+            "@util/*": [
+                "src/util/*"
             ],
             "@control/*": [
                 "src/control/*"
@@ -21,12 +27,12 @@
             "@shader/*": [
                 "src/shader/*"
             ]
-        }
+        },
     },
     "exclude": [
         "node_modules"
     ],
     "include": [
         "src/**/*.ts"
-    ]
+    ],
 }

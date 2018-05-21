@@ -1,0 +1,13 @@
+build site:
+  image: node:8.11.2
+  stage: build
+  script:
+    - npm -v
+    - npm install --progress=false
+    - npm install -g webpack
+    - webpack --config library.webpack.config.js
+    - webpack --config webpack.config.js
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - dist

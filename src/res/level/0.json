@@ -1,5 +1,5 @@
 {
-    "index": 1,
+    "index": 0,
     "width": 32,
     "height": 12,
     "time": 30,
@@ -9,7 +9,7 @@
     "annotations": [
         {
             "type": "text",
-            "text": "Get the wooden crate into the goal.",
+            "text": "Get the crate into the goal.",
             "x": 1,
             "y": 6
         }
@@ -25,16 +25,6 @@
             "show": {
                 "mass": true
             }
-        },
-        {
-            "x": 10,
-            "y": 3,
-            "type": "wood",
-            "control": true,
-            "rotation": false,
-            "show": {
-                "mass": true
-            }
         }
     ],
     "goals": [
@@ -44,12 +34,7 @@
             "width": 6,
             "height": 6,
             "type": "required",
-            "objectives": [
-                {
-                    "type": "type",
-                    "target": "wood"
-                }
-            ]
+            "objectives": []
         }
     ]
 }

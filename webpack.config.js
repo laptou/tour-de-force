@@ -1,5 +1,6 @@
 const path = require("path");
 const webpack = require("webpack");
+const config = require("./config");
 
 const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
@@ -12,7 +13,7 @@ const plugins = [
     }),
     new webpack.DllReferencePlugin({
         context: __dirname,
-        manifest: require('./build/library/library.json')
+        manifest: require(path.resolve(config.build, "library/library.json"))
     }),
     // Generate skeleton HTML file
     new HtmlWebpackPlugin({
@@ -21,20 +22,19 @@ const plugins = [
         xhtml: true
     }),
     new CleanWebpackPlugin(["dist"], {
-        verbose: false
+        exclude: ["library"]
     }),
     new HardSourceWebpackPlugin()
 ];
 
 module.exports = {
-    devtool: "cheap-source-map",
-    entry: ["./src"],
+    devtool: "eval-source-map",
+    entry: "./src/index.ts",
     context: __dirname,
     plugins,
     output: {
-        path: require("./config").output,
-        // publicPath: "/",
-        filename: "bundle.js"
+        path: config.output,
+        filename: "[name].js",
     },
     optimization: {
         runtimeChunk: false,
@@ -58,18 +58,20 @@ module.exports = {
                 options: { name: "[path][name].[ext]" }
             },
             {
-                test: /\.(glsl|json)$/i,
+                test: /\.(glsl|vert|frag)$/i,
                 use: 'raw-loader'
             }
         ]
     },
     resolve: {
-        extensions: [".ts", ".js", ".glsl"],
+        extensions: [".ts", ".js", ".glsl", ".json"],
         alias: {
             "@res": path.join(__dirname, "src/res"),
+            "@lib": path.join(__dirname, "src/lib"),
             "@shader": path.join(__dirname, "src/shader"),
             "@control": path.join(__dirname, "src/control"),
-            "@screen": path.join(__dirname, "src/screen"),
+            "@scene": path.join(__dirname, "src/scene"),
+            "@util": path.join(__dirname, "src/util"),
         }
     }
 };

@@ -2,6 +2,7 @@ const path = require('path');
 const webpack = require('webpack');
 const config = require("./config");
 
+
 module.exports = {
     context: process.cwd(),
     resolve: {
@@ -11,17 +12,31 @@ module.exports = {
     plugins: [
         new webpack.DllPlugin({
             name: '[name]',
-            path: path.resolve(config.output, "library/[name].json")
-        })],
+            path: path.resolve(config.build, "library/[name].json")
+        }),
+        new webpack.DefinePlugin({
+            'CANVAS_RENDERER': JSON.stringify(true),
+            'WEBGL_RENDERER': JSON.stringify(true)
+        })
+    ],
     entry: {
         library: [
-            'pixi.js',
-            'stats.js'
+            'stats.js',
+            'phaser'
         ]
     },
+    module:
+        {
+            rules: [
+                {
+                    test: /\.(glsl|vert|frag)$/i,
+                    use: 'raw-loader'
+                }
+            ]
+        },
     output: {
         filename: '[name].dll.js',
-        path: path.resolve(config.output, 'library'),
+        path: path.resolve(config.build, 'library'),
         library: '[name]'
     }
 };
