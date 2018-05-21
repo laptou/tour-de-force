@@ -1,12 +1,4 @@
-import { TileType } from "@lib/level";
-
-
-export interface TileConfig {
-    x: number;
-    y: number;
-    type: TileType;
-    elastic?: boolean;
-}
+import { TileData, TileType } from "@lib/level";
 
 export const TileStats = {
     [TileType.Wood]: {
@@ -26,8 +18,9 @@ export const TileStats = {
 export class Tile extends Phaser.GameObjects.Sprite {
 
     public tileType: TileType;
+    public allowControl: boolean;
 
-    constructor(scene: Phaser.Scene, config: TileConfig) {
+    constructor(scene: Phaser.Scene, config: TileData) {
         const { frame, mass } = TileStats[config.type];
 
         super(scene,
@@ -47,5 +40,6 @@ export class Tile extends Phaser.GameObjects.Sprite {
         matterObj.setInteractive();
 
         this.tileType = config.type;
+        this.allowControl = typeof config.control === "boolean" ? config.control : false;
     }
 }

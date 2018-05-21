@@ -1,5 +1,5 @@
 {
-    "index": 2,
+    "index": 15,
     "width": 32,
     "height": 12,
     "time": 30,
@@ -9,7 +9,7 @@
     "annotations": [
         {
             "type": "text",
-            "text": "Now do it again, but take it slow.\nThis time you can't control the wooden crate.",
+            "text": "This is a test level. How did you even get in here?",
             "x": 1,
             "y": 6
         }
@@ -34,6 +34,14 @@
             }
         }
     ],
+    "shapes": [
+        {
+            "data": "0, 3; 3, 3; 3, 0; 6, 0; 6, 6; 0, 6",
+            "x": 3,
+            "y": 7,
+            "static": true
+        }
+    ],
     "goals": [
         {
             "x": 28,
@@ -45,12 +53,6 @@
                 {
                     "type": "type",
                     "target": "wood"
-                },
-                {
-                    "type": "velocity",
-                    "target": {
-                        "maximum": 0.2
-                    }
                 }
             ]
         }

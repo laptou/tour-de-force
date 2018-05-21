@@ -11,6 +11,8 @@ export class LevelSelectScene extends Phaser.Scene {
     private speed: number = 0.05;
     private size = { rows: 3, cols: 5 };
 
+    private initialized = false;
+
     constructor() {
         super({ key: "level-select" });
     }
@@ -22,6 +24,8 @@ export class LevelSelectScene extends Phaser.Scene {
     }
 
     public create() {
+        if (this.initialized) return;
+
         const { width, height } = this.cameras.main;
         const self = this as any;
         this.grid = this.add.tileSprite(width / 2, height / 2, width, height, "tile-16");
@@ -65,13 +69,7 @@ export class LevelSelectScene extends Phaser.Scene {
                 button.alpha = 0;
 
                 button.on('pointerup', () => {
-                    var transition = this.scene.transition({
-                        target: 'level',
-                        duration: 1000,
-                        onUpdate: this.outro,
-                        moveBelow: true,
-                        data: { level }
-                    });
+                    this.gotoLevel(level);
                 })
 
                 buttons.push(button);
@@ -79,6 +77,19 @@ export class LevelSelectScene extends Phaser.Scene {
         }
 
         this.btnGrid = this.add.container(width / 2, height / 2, buttons);
+        this.input.keyboard.on("keydown_T", () => {
+            this.gotoLevel(15);
+        })
+    }
+
+    public gotoLevel(level: number) {
+        var transition = this.scene.transition({
+            target: 'level',
+            duration: 1000,
+            onUpdate: this.outro,
+            moveBelow: true,
+            data: { level }
+        });
     }
 
     public update(total: number, delta: number) {

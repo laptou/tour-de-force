@@ -242,6 +242,7 @@ export class LevelHud extends Phaser.GameObjects.Container {
     private ontiledown(pointer: Phaser.Input.Pointer, tile: Tile) {
         this.scene.state.target = tile;
 
+        if (!tile.allowControl) return;
         if (this.state.modes && this.state.modes[this.mode] <= 0) return;
         if (this.state.completed) return;
 

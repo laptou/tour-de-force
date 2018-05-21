@@ -20,6 +20,7 @@
             "y": 3,
             "type": "aluminum",
             "track": true,
+            "control": true,
             "show": {
                 "mass": true
             }
@@ -28,6 +29,7 @@
             "x": 10,
             "y": 3,
             "type": "wood",
+            "control": true,
             "show": {
                 "mass": true
             }

@@ -18,6 +18,8 @@ export interface TileData {
     y: number;
     type: TileType;
     track?: boolean;
+    control?: boolean;
+    elastic?: boolean;
     show?: { mass?: boolean; }
 }
 
@@ -31,6 +33,14 @@ export interface GoalData {
     height: number;
     position: VectorLike;
     objectives: ObjectiveData[];
+}
+
+export interface ShapeData {
+    data: string;
+    x: number;
+    y: number;
+    static?: boolean;
+    mass?: number;
 }
 
 export enum AnnotationType {
@@ -54,6 +64,7 @@ export interface LevelData {
     modes: { [mode: string]: number };
     tiles: TileData[];
     goals: GoalData[];
+    shapes?: ShapeData[];
     annotations: AnnotationData[];
 }
 

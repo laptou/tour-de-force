@@ -5,6 +5,7 @@ import { LevelHud } from "@scene/level/hud";
 import { LevelState } from "@scene/level/state";
 import { Size, SizeLike, Vector, VectorLike } from "@util/math";
 import * as Phaser from "phaser";
+import * as uuidv4 from "uuid/v4";
 
 import { Text } from "../../config";
 import { Tile } from "./tile";
@@ -71,6 +72,8 @@ export class LevelScene extends Phaser.Scene {
         if (!("banners" in this.textures.list))
             this.load.spritesheet("banners", require("@res/img/banner-sprites.png"), { frameWidth: 640, frameHeight: 128 });
 
+        this.matter.world.drawDebug = true;
+        this.matter.world.createDebugGraphic();
     }
 
     public create() {
@@ -99,7 +102,8 @@ export class LevelScene extends Phaser.Scene {
         // load the level
         // duplicate the object to avoid modifying the actual instance
         // that json-loader created
-        this.state.level = JSON.parse(JSON.stringify(require(`@res/level/${this.level}.json`))) as LevelData;
+        // tslint:disable-next-line:prefer-template
+        this.state.level = JSON.parse(JSON.stringify(require("@res/level/" + this.level.toString() + ".json"))) as LevelData;
 
         //#region Boundaries
 
@@ -219,6 +223,52 @@ export class LevelScene extends Phaser.Scene {
 
             this.state.goals.push(goal);
             this.tiles.add(goal);
+        }
+
+        if (this.state.level.shapes) {
+            for (const data of this.state.level.shapes) {
+                // invert Y coordinate so Y = 0 is at the bottom
+                data.y = this.origin.y / 32 - data.y;
+                data.x = this.origin.x / 32 + data.x;
+
+                let [minX, minY, maxX, maxY] = [0, 0, 0, 0];
+
+                const verts = data.data
+                    .split(";").map(s => {
+                        const [x, y] = s.split(",");
+                        const v = { x: parseFloat(x.trim()) * 32, y: parseFloat(y.trim()) * 32 };
+                        minX = min(v.x, minX); minY = min(v.y, minY);
+                        maxX = max(v.x, maxX); maxY = max(v.y, maxY);
+                        return v;
+                    });
+
+                const graphic = this.make.graphics({});
+
+                graphic.lineStyle(3, 0);
+                graphic.fillStyle(0xAAAAAA);
+                graphic.beginPath();
+
+                for (const { x, y } of verts) graphic.lineTo(x, y);
+
+                graphic.closePath();
+                graphic.strokePath();
+                graphic.fillPath();
+
+                // tslint:disable-next-line:prefer-template
+                const tex = "shape-" + uuidv4();
+                graphic.generateTexture(tex, maxX - minX, maxY - minY);
+
+                const shape = this.matter.add.image(
+                    data.x * 32,
+                    data.y * 32,
+                    tex, 0,
+                    { shape: { type: "fromVertices", verts } }) as any;
+
+                if (data.static)
+                    shape.setStatic(true);
+
+                this.tiles.add(shape);
+            }
         }
 
         for (const data of this.state.level.tiles) {
