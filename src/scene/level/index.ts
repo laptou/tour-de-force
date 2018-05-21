@@ -97,6 +97,35 @@ export class LevelScene extends Phaser.Scene {
         this.hud.update();
     }
 
+    public back() {
+        const { scrollX, scrollY, width, height } = this.cameras.main;
+
+        this.overlay = this.add.tileSprite(scrollX + width / 2, scrollY + height / 2, width, height, "tile-16");
+        this.overlay.setAlpha(0);
+
+        this.scene.transition({
+            target: "level-select",
+            duration: 2000,
+            onUpdate: this.ontransitionupdate,
+            moveBelow: true
+        });
+    }
+
+    public end(type: LevelBannerType) {
+        this.state.completed = true;
+        this.matter.pause();
+
+        this.banner = new LevelBanner(this, type);
+        this.add.existing(this.banner);
+
+        const { scrollX, scrollY, width, height } = this.cameras.main;
+
+        this.banner.setPosition(scrollX + width / 2, scrollY + height / 2);
+        this.banner.begin();
+
+        setTimeout(() => this.back(), 2000);
+    }
+
     private loadWorld() {
 
         // load the level
@@ -217,7 +246,7 @@ export class LevelScene extends Phaser.Scene {
 
             goal.on("update:completed", (completed: boolean) => {
                 if (this.state.goals.every(g => g.completed)) {
-                    this.levelCompleted();
+                    this.end(LevelBannerType.Success);
                 }
             });
 
@@ -291,28 +320,7 @@ export class LevelScene extends Phaser.Scene {
         //#endregion
     }
 
-    private levelCompleted() {
-        this.state.completed = true;
 
-        this.banner = new LevelBanner(this, LevelBannerType.Success);
-        this.add.existing(this.banner);
-
-        const { scrollX, scrollY, width, height } = this.cameras.main;
-
-        this.banner.setPosition(scrollX + width / 2, scrollY + height / 2);
-        this.banner.begin();
-
-        this.overlay = this.add.tileSprite(scrollX + width / 2, scrollY + height / 2, width, height, "tile-16");
-        this.overlay.setAlpha(0);
-
-        setTimeout(() =>
-            this.scene.transition({
-                target: "level-select",
-                duration: 2000,
-                onUpdate: this.ontransitionupdate,
-                moveBelow: true
-            }), 2000);
-    }
 
     private ontransitionupdate(progress: number) {
         if (this.overlay) {

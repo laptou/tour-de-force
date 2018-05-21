@@ -1,5 +1,6 @@
 import { GameMode, LevelData } from "@lib/level";
 import { LevelScene } from "@scene/level";
+import { LevelBannerType } from "@scene/level/banner";
 import { ForceLevelHudSelector, LevelHudSelector, VelocityLevelHudSelector } from "@scene/level/selector";
 import { Tile } from "@scene/level/tile";
 import { ControlAlignment, HudButton, ModeHudButtonConfig } from "@scene/util/ui";
@@ -76,11 +77,21 @@ export class LevelHud extends Phaser.GameObjects.Container {
         this.add(this.overlays);
 
         // current level
-        this.add(scene.make.text({
-            x: px,
-            y: py + height + 10,
+        const levelText = scene.make.text({
+            x: px + 64,
+            y: py + height + 18,
             text: `Level ${(scene.state.level as LevelData).index + 1}`,
             style: Text.Header
+        });
+        this.add(levelText);
+
+        this.add(new HudButton(scene, {
+            frame: 1,
+            sprite: "controls",
+            offset: { x: px + 24, y: py + height + 32 },
+            text: "«",
+            tooltip: "Back to Level Select",
+            handler: () => scene.back()
         }));
 
         // information
@@ -234,9 +245,23 @@ export class LevelHud extends Phaser.GameObjects.Container {
                 this.selector.activate();
 
                 if (this.state.modes) {
+
                     // tslint:disable-next-line:prefer-template
                     const btn = this.getByName("mode:" + this.state.mode) as HudButton;
                     btn.setText(this.state.modes[this.state.mode].toFixed());
+
+                    let failed = true;
+
+                    for (const mode in this.state.modes) {
+                        if (!this.state.modes.hasOwnProperty(mode)) continue;
+
+                        if (this.state.modes[mode] !== 0) {
+                            failed = false;
+                            break;
+                        }
+                    }
+
+                    if (failed) this.scene.end(LevelBannerType.Failure);
                 }
             }
 
