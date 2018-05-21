@@ -31,6 +31,7 @@ export class Tile extends Phaser.GameObjects.Sprite {
         const matterObj = scene.matter.add.gameObject(this, {
             chamfer: { radius: 16 },
             mass,
+            inertia: !config.rotation ? Infinity : undefined,
             friction: config.friction || 0,
             frictionAir: 0, // no friction; these are physics problems
             frictionStatic: 0,

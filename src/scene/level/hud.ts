@@ -1,6 +1,6 @@
 import { GameMode, LevelData } from "@lib/level";
 import { LevelScene } from "@scene/level";
-import { LevelBannerType } from "@scene/level/banner";
+import { LevelOutcome } from "@scene/level/banner";
 import { ForceLevelHudSelector, LevelHudSelector, VelocityLevelHudSelector } from "@scene/level/selector";
 import { Tile } from "@scene/level/tile";
 import { ControlAlignment, HudButton, ModeHudButtonConfig } from "@scene/util/ui";
@@ -261,7 +261,7 @@ export class LevelHud extends Phaser.GameObjects.Container {
                         }
                     }
 
-                    if (failed) this.scene.end(LevelBannerType.Failure);
+                    if (failed) this.scene.end(LevelOutcome.Failure);
                 }
             }
 

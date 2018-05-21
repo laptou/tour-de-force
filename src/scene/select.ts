@@ -1,4 +1,5 @@
 import { Button } from "@control/button";
+import { LevelOutcome } from "@scene/level/banner";
 import * as Phaser from "phaser";
 
 const { sin, cos, random, PI, max } = Math;
@@ -17,6 +18,17 @@ export class LevelSelectScene extends Phaser.Scene {
         super({ key: "level-select" });
     }
 
+    public init(data: any) {
+        if (data) {
+            const level: number = data.level;
+            const outcome: LevelOutcome | undefined = data.outcome;
+
+            if (level && outcome) {
+
+            }
+        }
+    }
+
     public preload() {
         this.events.on("transitioncomplete", this.transitioncomplete, this);
 
@@ -28,7 +40,14 @@ export class LevelSelectScene extends Phaser.Scene {
 
         const { width, height } = this.cameras.main;
         const self = this as any;
+
+        if (this.grid)
+            this.grid.destroy();
+
         this.grid = this.add.tileSprite(width / 2, height / 2, width, height, "tile-16");
+
+        if (this.title)
+            this.title.destroy();
 
         this.title =
             this.add.text(20, -50, "Choose a level")
@@ -38,10 +57,8 @@ export class LevelSelectScene extends Phaser.Scene {
                 .setStroke("#FFFFFF", 10)
                 .setShadow(0, 0, "#AAAAAA", 6, true, false);
 
-        const mask = this.make.graphics({}, false);
-        mask.fillStyle(0xFFFFFF);
-        mask.fillCircle(50, 50, 300);
-        this.children.remove(mask);
+        if (this.btnGrid)
+            this.btnGrid.destroy();
 
         const buttons: Phaser.GameObjects.GameObject[] = [];
 
@@ -69,7 +86,7 @@ export class LevelSelectScene extends Phaser.Scene {
                 button.alpha = 0;
 
                 button.on('pointerup', () => {
-                    this.gotoLevel(level);
+                    this.goto(level);
                 })
 
                 buttons.push(button);
@@ -77,12 +94,13 @@ export class LevelSelectScene extends Phaser.Scene {
         }
 
         this.btnGrid = this.add.container(width / 2, height / 2, buttons);
+
         this.input.keyboard.on("keydown_T", () => {
-            this.gotoLevel(15);
+            this.goto(15);
         })
     }
 
-    public gotoLevel(level: number) {
+    public goto(level: number) {
         var transition = this.scene.transition({
             target: 'level',
             duration: 1000,

@@ -66,25 +66,29 @@ export class Goal extends Phaser.GameObjects.Container {
                     variable = "ρ"
                     unit = Momentum.KilogramMetersPerSecond;
                     break;
+                case ObjectiveType.AngularVelocity:
+                    variable = "ω"
+                    unit = AngularVelocity.RadiansPerSecond;
+                    break;
             }
 
             if (typeof o.target === "number") // number
-                lines.push(`${variable} = ${new Measurement(o.target, unit)}`);
+                lines.push(`${variable} = ${new Measurement(o.target, unit).toExponential(3)}`);
             else if ("x" in o.target) // vector
-                lines.push(`${variable} = ${new VectorMeasurement(o.target, unit)}`);
+                lines.push(`${variable} = ${new VectorMeasurement(o.target, unit).toExponential(1)}`);
             else // min and max
             {
                 let line = variable;
 
                 if (typeof o.target.maximum === "number")
-                    line = `${line} < ${new Measurement(o.target.maximum, unit)}`;
+                    line = `${line} < ${new Measurement(o.target.maximum, unit).toExponential(3)}`;
                 if (typeof o.target.maximum === "object")
-                    line = `${line} < ${new VectorMeasurement(o.target.maximum, unit)}`;
+                    line = `${line} < ${new VectorMeasurement(o.target.maximum, unit).toExponential(1)}`;
 
                 if (typeof o.target.minimum === "number")
-                    line = `${new Measurement(o.target.minimum, unit)} < ${line}`;
+                    line = `${new Measurement(o.target.minimum, unit).toExponential(3)} < ${line}`;
                 if (typeof o.target.minimum === "object")
-                    line = `${new VectorMeasurement(o.target.minimum, unit)} < ${line}`;
+                    line = `${new VectorMeasurement(o.target.minimum, unit).toExponential(1)} < ${line}`;
 
                 lines.push(line);
             }
@@ -132,17 +136,14 @@ export class Goal extends Phaser.GameObjects.Container {
     }
 
     public meetsObjectives(tile: Tile) {
-        return this.objectives.every(o => {
-            const body = tile.body as Matter.Body;
-            const bounds = (this.body as Matter.Body).bounds as { min: VectorLike, max: VectorLike };
-            const epsilon = 10; // these are pixels, so ε = 1 is fine
-            const within = body.vertices.every(v =>
-                v.x <= bounds.max.x + epsilon && bounds.min.x <= v.x + epsilon &&
-                v.y <= bounds.max.y + epsilon && bounds.min.y <= v.y + epsilon);
+        const body = tile.body as Matter.Body;
+        const bounds = (this.body as Matter.Body).bounds as { min: VectorLike, max: VectorLike };
+        const epsilon = 10; // these are pixels, so ε = 1 is fine
+        const within = body.vertices.every(v =>
+            v.x <= bounds.max.x + epsilon && bounds.min.x <= v.x + epsilon &&
+            v.y <= bounds.max.y + epsilon && bounds.min.y <= v.y + epsilon);
 
-            if (!within)
-                return false;
-
+        return within && this.objectives.every(o => {
             let quantity: Vector | number;
 
             switch (o.type) {

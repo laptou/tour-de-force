@@ -1,15 +1,15 @@
 import * as Phaser from "phaser";
 
-export enum LevelBannerType {
+export enum LevelOutcome {
     Success = 0,
     Failure = 1
 }
 
 export class LevelBanner extends Phaser.GameObjects.Container {
-    public bannerType: LevelBannerType;
+    public bannerType: LevelOutcome;
     public banner: Phaser.GameObjects.Image;
 
-    constructor(scene: Phaser.Scene, type: LevelBannerType) {
+    constructor(scene: Phaser.Scene, type: LevelOutcome) {
         super(scene);
 
         this.bannerType = type;

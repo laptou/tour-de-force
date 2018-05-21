@@ -21,6 +21,7 @@
             "type": "aluminum",
             "track": true,
             "control": true,
+            "rotation": false,
             "show": {
                 "mass": true
             }

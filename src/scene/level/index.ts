@@ -1,5 +1,5 @@
 import { AnnotationType, LevelData } from "@lib/level";
-import { LevelBanner, LevelBannerType } from "@scene/level/banner";
+import { LevelBanner, LevelOutcome } from "@scene/level/banner";
 import { Goal } from "@scene/level/goal";
 import { LevelHud } from "@scene/level/hud";
 import { LevelState } from "@scene/level/state";
@@ -72,8 +72,6 @@ export class LevelScene extends Phaser.Scene {
         if (!("banners" in this.textures.list))
             this.load.spritesheet("banners", require("@res/img/banner-sprites.png"), { frameWidth: 640, frameHeight: 128 });
 
-        this.matter.world.drawDebug = true;
-        this.matter.world.createDebugGraphic();
     }
 
     public create() {
@@ -97,7 +95,7 @@ export class LevelScene extends Phaser.Scene {
         this.hud.update();
     }
 
-    public back() {
+    public back(outcome?: LevelOutcome) {
         const { scrollX, scrollY, width, height } = this.cameras.main;
 
         this.overlay = this.add.tileSprite(scrollX + width / 2, scrollY + height / 2, width, height, "tile-16");
@@ -107,15 +105,15 @@ export class LevelScene extends Phaser.Scene {
             target: "level-select",
             duration: 2000,
             onUpdate: this.ontransitionupdate,
-            moveBelow: true
+            moveBelow: true,
+            data: { level: this.level, outcome }
         });
     }
 
-    public end(type: LevelBannerType) {
+    public end(outcome: LevelOutcome) {
         this.state.completed = true;
-        this.matter.pause();
 
-        this.banner = new LevelBanner(this, type);
+        this.banner = new LevelBanner(this, outcome);
         this.add.existing(this.banner);
 
         const { scrollX, scrollY, width, height } = this.cameras.main;
@@ -123,7 +121,7 @@ export class LevelScene extends Phaser.Scene {
         this.banner.setPosition(scrollX + width / 2, scrollY + height / 2);
         this.banner.begin();
 
-        setTimeout(() => this.back(), 2000);
+        setTimeout(() => this.back(outcome), 2000);
     }
 
     private loadWorld() {
@@ -246,7 +244,7 @@ export class LevelScene extends Phaser.Scene {
 
             goal.on("update:completed", (completed: boolean) => {
                 if (this.state.goals.every(g => g.completed)) {
-                    this.end(LevelBannerType.Success);
+                    this.end(LevelOutcome.Success);
                 }
             });
 

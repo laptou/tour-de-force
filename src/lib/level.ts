@@ -20,6 +20,7 @@ export interface TileData {
     track?: boolean;
     control?: boolean;
     elastic?: boolean;
+    rotation?: boolean;
     friction?: number;
     show?: { mass?: boolean; }
 }

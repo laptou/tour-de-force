@@ -21,6 +21,7 @@
             "type": "aluminum",
             "track": true,
             "control": true,
+            "rotation": false,
             "show": {
                 "mass": true
             }
@@ -30,6 +31,7 @@
             "y": 3,
             "type": "wood",
             "control": true,
+            "rotation": false,
             "show": {
                 "mass": true
             }
