@@ -20,6 +20,7 @@ export interface TileData {
     track?: boolean;
     control?: boolean;
     elastic?: boolean;
+    friction?: number;
     show?: { mass?: boolean; }
 }
 
@@ -81,7 +82,7 @@ export interface TypeObjectiveData {
 }
 
 export interface ScalarObjectiveData {
-    type: ObjectiveType.Momentum;
+    type: ObjectiveType.AngularVelocity;
     target: { minimum?: number; maximum?: number } | number;
 }
 
@@ -90,7 +91,7 @@ export interface VectorObjectiveData {
     target: { minimum?: VectorLike | number; maximum?: VectorLike | number } | VectorLike | number;
 }
 
-export type ObjectiveData = TypeObjectiveData | VectorObjectiveData;
+export type ObjectiveData = TypeObjectiveData | VectorObjectiveData | ScalarObjectiveData;
 
 export enum GoalType {
     Required,

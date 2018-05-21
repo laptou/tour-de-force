@@ -1,8 +1,8 @@
 import { GoalData, ObjectiveData, ObjectiveType, TypeObjectiveData } from "@lib/level";
 import { Tile, TileStats } from "@scene/level/tile";
 import { find } from "@util/index.ts";
-import { Vector, VectorLike } from "@util/math";
-import { Measurement, Momentum, Unit, VectorMeasurement, Velocity } from "@util/measurement";
+import { dist, Vector, VectorLike } from "@util/math";
+import { AngularVelocity, Mass, Measurement, Momentum, Unit, VectorMeasurement, Velocity } from "@util/measurement";
 
 import { Text } from "../../config";
 
@@ -115,6 +115,7 @@ export class Goal extends Phaser.GameObjects.Container {
         const world = (body as any).world as Phaser.Physics.Matter.World;
 
         world.on("collisionstart", this.collisionstart, this);
+        world.on("collisionactive", this.collisionactive, this);
         world.on("afterupdate", this.afterupdate, this);
         world.on("collisionend", this.collisionend, this);
     }
@@ -134,7 +135,7 @@ export class Goal extends Phaser.GameObjects.Container {
         return this.objectives.every(o => {
             const body = tile.body as Matter.Body;
             const bounds = (this.body as Matter.Body).bounds as { min: VectorLike, max: VectorLike };
-            const epsilon = 1; // these are pixels, so ε = 1 is fine
+            const epsilon = 10; // these are pixels, so ε = 1 is fine
             const within = body.vertices.every(v =>
                 v.x <= bounds.max.x + epsilon && bounds.min.x <= v.x + epsilon &&
                 v.y <= bounds.max.y + epsilon && bounds.min.y <= v.y + epsilon);
@@ -142,33 +143,54 @@ export class Goal extends Phaser.GameObjects.Container {
             if (!within)
                 return false;
 
-            if (o.type === ObjectiveType.Type && o.target !== tile.tileType)
-                return false;
-
-            let quantity: Vector | null = null;
+            let quantity: Vector | number;
 
             switch (o.type) {
+                case ObjectiveType.Type:
+                    return o.target === tile.tileType;
                 case ObjectiveType.Velocity:
                     quantity =
                         new VectorMeasurement(body.velocity, Velocity.PixelsPerStep)
                             .to(Velocity.MetersPerSecond);
                     break;
+                case ObjectiveType.Momentum:
+                    quantity =
+                        new VectorMeasurement(body.velocity, Velocity.PixelsPerStep)
+                            .to(Velocity.MetersPerSecond)
+                            .times(new Measurement(body.mass, Mass.Kilogram));
+                    break;
+                case ObjectiveType.AngularVelocity:
+                    quantity =
+                        new Measurement(body.angularVelocity, AngularVelocity.DegreesPerStep)
+                            .to(AngularVelocity.RadiansPerSecond)
+                            .valueOf();
+                    break;
+                default:
+                    return false;
             }
 
-            if (quantity && typeof o.target !== "string") {
-                if (typeof o.target === "number") // number
-                    return Math.abs(quantity.length() - o.target) < 0.05;
-                else if ("x" in o.target) // vector
-                    return quantity.minus(o.target).length() < 0.05;
-                else // min and max
-                {
+            if (typeof o.target === "number" || "x" in o.target) {
+                return dist(quantity, o.target) < 0.05;
+            } else {
+                // min and max
+                if (typeof quantity === "object") {
                     if (typeof o.target.maximum !== "undefined")
                         if (Vector.lt(o.target.maximum, quantity)) return false;
 
                     if (typeof o.target.minimum !== "undefined")
                         if (Vector.gt(o.target.minimum, quantity)) return false;
+                } else {
+                    if (typeof o.target.maximum === "number" && o.target.maximum < quantity)
+                        return false;
 
-                    return true;
+                    if (typeof o.target.maximum === "object" && Vector.len(o.target.maximum) < quantity)
+                        return false;
+
+                    if (typeof o.target.minimum === "number" && o.target.minimum > quantity)
+                        return false;
+
+                    if (typeof o.target.minimum === "object" && Vector.len(o.target.minimum) > quantity)
+                        return false;
                 }
             }
 
@@ -184,12 +206,31 @@ export class Goal extends Phaser.GameObjects.Container {
 
         let me = a === this.body ? a : b, them = b === this.body ? a : b;
 
-        const tile = (them as any).gameObject as Tile;
+        const tile = (them as any).gameObject;
 
-        if (this.meetsObjectives(tile)) {
-            this.completed = true;
-        } else {
-            this.tiles.push(tile);
+        if (tile instanceof Tile) {
+            if (this.meetsObjectives(tile)) {
+                this.completed = true;
+            } else {
+                this.tiles.push(tile);
+            }
+        }
+    }
+
+    private collisionactive(event: Matter.IEventCollision<Phaser.Physics.Matter.World>,
+        a: Matter.Body, b: Matter.Body) {
+
+        if (this.completed) return;
+        if (a !== this.body && b !== this.body) return;
+
+        let me = a === this.body ? a : b, them = b === this.body ? a : b;
+
+        const tile = (them as any).gameObject;
+
+        if (tile instanceof Tile) {
+            if (this.meetsObjectives(tile)) {
+                this.completed = true;
+            }
         }
     }
 
@@ -199,9 +240,11 @@ export class Goal extends Phaser.GameObjects.Container {
 
         let me = a === this.body ? a : b, them = b === this.body ? a : b;
 
-        const tile = (b as any).gameObject as Tile;
+        const tile = (them as any).gameObject;
 
-        this.tiles.splice(this.tiles.indexOf(tile), 1);
+        if (tile instanceof Tile) {
+            this.tiles.splice(this.tiles.indexOf(tile), 1);
+        }
     }
 
     private afterupdate() {

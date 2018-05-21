@@ -1,4 +1,4 @@
-const { pow, sqrt, hypot } = Math;
+const { pow, sqrt, hypot, abs } = Math;
 
 export function square(n: number) {
     return n * n;
@@ -7,6 +7,20 @@ export function square(n: number) {
 export function clamp(min: number, x: number, max: number) {
     return Math.min(Math.max(x, min), max);
 }
+
+export function dist(a: number | VectorLike, b: number | VectorLike) {
+    if (typeof a === "number" && typeof b === "number")
+        return abs(a - b);
+    if (typeof a === "number" && typeof b === "object")
+        return abs(a - Vector.len(b));
+    if (typeof a === "object" && typeof b === "number")
+        return abs(Vector.len(a) - b);
+    if (typeof a === "object" && typeof b === "object")
+        return Vector.dist(a, b);
+
+    throw new Error("Operands must both be of the same type!");
+}
+
 
 export interface VectorLike { x: number; y: number }
 
@@ -46,19 +60,37 @@ export class Vector {
         return hypot(v.x, v.y);
     }
 
+    public static dist(a: VectorLike, b: VectorLike) {
+        return Vector.sub(a, b).length();
+    }
+
     public static div(a: VectorLike, b: VectorLike | number): Vector {
-        return new Vector(typeof b === "number" ? { x: a.x / b, y: a.y / b } : { x: a.x / b.x, y: a.y / b.y });
+        return typeof b === "number" ?
+            new Vector(a.x / b, a.y / b) :
+            new Vector(a.x / b.x, a.y / b.y);
     }
 
     public static mult(a: VectorLike, b: VectorLike | number): Vector {
-        return new Vector(typeof b === "number" ? { x: a.x * b, y: a.y * b } : { x: a.x * b.x, y: a.y * b.y });
+        return typeof b === "number" ?
+            new Vector(a.x * b, a.y * b) :
+            new Vector(a.x * b.x, a.y * b.y);
     }
 
-    public static sub(a: VectorLike, b: VectorLike): Vector {
+    public static sub(a: VectorLike, b: VectorLike | number): Vector {
+        if (typeof b === "number") {
+            const len = Vector.len(a);
+            return new Vector(a.x - b * a.x / len, a.y - b * a.y / len);
+        }
+
         return new Vector(a.x - b.x, a.y - b.y);
     }
 
-    public static add(a: VectorLike, b: VectorLike): Vector {
+    public static add(a: VectorLike, b: VectorLike | number): Vector {
+        if (typeof b === "number") {
+            const len = Vector.len(a);
+            return new Vector(a.x + b * a.x / len, a.y + b * a.y / len);
+        }
+
         return new Vector(a.x + b.x, a.y + b.y);
     }
 
@@ -85,8 +117,8 @@ export class Vector {
     public length() { return Vector.len(this); }
     public normalized() { return Vector.normalize(this); }
 
-    public plus(v: VectorLike) { return Vector.add(this, v); }
-    public minus(v: VectorLike) { return Vector.sub(this, v); }
+    public plus(v: number | VectorLike) { return Vector.add(this, v); }
+    public minus(v: number | VectorLike) { return Vector.sub(this, v); }
     public times(v: number | VectorLike) { return Vector.mult(this, v); }
     public over(v: number | VectorLike) { return Vector.div(this, v); }
 

@@ -8,7 +8,9 @@ import { Text } from "../../config";
 export interface LevelHudSelector<T extends Numeric> {
     info: string;
     color: number;
-    ray: Ray;
+    start: number | Vector;
+    end: number | Vector;
+    show: boolean;
 
     move(x: number, y: number): void;
     query(): T;
@@ -21,6 +23,7 @@ export interface VectorLevelSelectorConfig {
     scale?: number;
     x: number;
     y: number;
+    show: boolean;
 }
 
 export abstract class VectorLevelHudSelector
@@ -32,9 +35,10 @@ export abstract class VectorLevelHudSelector
 
     public ray: Ray;
     public scene: LevelScene;
-    public mode: GameMode;
 
+    public mode: GameMode;
     public unit: Unit;
+    public show: boolean;
     public scale: number = 1;
 
     private dirty = false;
@@ -48,6 +52,7 @@ export abstract class VectorLevelHudSelector
 
         this.mode = config.mode;
         this.unit = config.unit;
+        this.show = config.show;
         this.ray = new Ray({ x: config.x, y: config.y }, Vector.zero);
 
         if (typeof config.scale === "number") this.scale = config.scale;
@@ -115,6 +120,9 @@ export abstract class VectorLevelHudSelector
     }
 
     public abstract activate(): void;
+
+    public get start() { return new Vector(this.ray.source); }
+    public get end() { return this.ray.end; }
 }
 
 export class ForceLevelHudSelector extends VectorLevelHudSelector {
@@ -124,7 +132,8 @@ export class ForceLevelHudSelector extends VectorLevelHudSelector {
             unit: new Unit(Force.Newton),
             scale: 100,
             x: origin.x,
-            y: origin.y
+            y: origin.y,
+            show: true
         });
     }
 
@@ -186,7 +195,8 @@ export class VelocityLevelHudSelector extends VectorLevelHudSelector {
             unit: Velocity.MetersPerSecond,
             scale: 1 / 30,
             x: origin.x,
-            y: origin.y
+            y: origin.y,
+            show: true
         });
     }
 

@@ -3,7 +3,7 @@ import { LevelScene } from "@scene/level";
 import { ForceLevelHudSelector, LevelHudSelector, VelocityLevelHudSelector } from "@scene/level/selector";
 import { Tile } from "@scene/level/tile";
 import { ControlAlignment, HudButton, ModeHudButtonConfig } from "@scene/util/ui";
-import { clamp, Vector } from "@util/math";
+import { clamp, dist, Vector } from "@util/math";
 import {
     Angle,
     AngularVelocity,
@@ -43,6 +43,7 @@ export class LevelHud extends Phaser.GameObjects.Container {
 
     private actionInfo!: Phaser.GameObjects.Text;
     private targetInfo!: Phaser.GameObjects.Text;
+    private tilePreview!: Phaser.GameObjects.Image;
 
     private dirty = false;
     private frame!: Phaser.GameObjects.Graphics;
@@ -99,6 +100,16 @@ export class LevelHud extends Phaser.GameObjects.Container {
             backgroundColor: "white",
             padding: 10,
             style: Text.Normal.Light
+        }));
+
+        this.add(this.tilePreview = scene.make.image({
+            alpha: 0.5,
+            x: px + width - 150,
+            y: py + 8,
+            scale: 0.75,
+            origin: { x: 1, y: 0 },
+            key: scene.state.target && scene.state.target.texture.key,
+            frame: scene.state.target && scene.state.target.frame.name
         }));
 
         if (scene.state.modes) {
@@ -183,24 +194,27 @@ export class LevelHud extends Phaser.GameObjects.Container {
             this.actionInfo.text = "";
 
             if (this.scene.state.target && this.selector) {
-                const { ray, info, color } = this.selector;
+                const { start, end, info, color } = this.selector;
 
-                this.overlays.lineStyle(4, color);
+                if (this.selector.show && start instanceof Vector && end instanceof Vector) {
+                    this.overlays.lineStyle(4, color);
 
-                this.overlays.lineBetween(ray.x1, ray.y1, ray.x2, ray.y2);
+                    this.overlays.lineBetween(start.x, start.y, end.x, end.y);
 
-                this.overlays.lineStyle(3, color, 0.6);
+                    this.overlays.lineStyle(3, color, 0.6);
 
-                this.overlays.lineBetween(ray.x1, ray.y1, ray.x2, ray.y1);
-                this.overlays.lineBetween(ray.x2, ray.y1, ray.x2, ray.y2);
+                    this.overlays.lineBetween(start.x, start.y, end.x, start.y);
+                    this.overlays.lineBetween(end.x, start.y, end.x, end.y);
 
-                const point = ray.plus(10).end;
-                const dir = ray.unit.times(10).direction;
-                const p1 = Vector.add(ray.end, { x: dir.y, y: -dir.x });
-                const p2 = Vector.add(ray.end, { x: -dir.y, y: dir.x });
+                    const ray = end.minus(start);
+                    const point = ray.plus(10).plus(start);
+                    const dir = ray.normalized().times(10);
+                    const p1 = Vector.add(end, { x: dir.y, y: -dir.x });
+                    const p2 = Vector.add(end, { x: -dir.y, y: dir.x });
 
-                this.overlays.fillStyle(color, 1);
-                this.overlays.fillTriangle(point.x, point.y, p2.x, p2.y, p1.x, p1.y);
+                    this.overlays.fillStyle(color, 1);
+                    this.overlays.fillTriangle(point.x, point.y, p2.x, p2.y, p1.x, p1.y);
+                }
 
                 this.actionInfo.text = info || "";
             }
@@ -216,7 +230,7 @@ export class LevelHud extends Phaser.GameObjects.Container {
 
     private onpointerup(pointer: Phaser.Input.Pointer, x: number, y: number) {
         if (this.selector) {
-            if (this.selector.ray.length > 0) {
+            if (dist(this.selector.start, this.selector.end) > 0) {
                 this.selector.activate();
 
                 if (this.state.modes) {
@@ -241,6 +255,7 @@ export class LevelHud extends Phaser.GameObjects.Container {
 
     private ontiledown(pointer: Phaser.Input.Pointer, tile: Tile) {
         this.scene.state.target = tile;
+        this.tilePreview.setTexture(tile.texture.key, tile.frame.name);
 
         if (!tile.allowControl) return;
         if (this.state.modes && this.state.modes[this.mode] <= 0) return;
